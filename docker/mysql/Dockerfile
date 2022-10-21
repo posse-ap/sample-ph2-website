@@ -1,4 +1,4 @@
-FROM mysql:8-debian
+FROM --platform=linux/x86_64 mysql:8-debian
 # 言語設定を変えるためにパッケージをインストール
 RUN apt-get update
 RUN apt-get -y install locales-all
