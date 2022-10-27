@@ -79,8 +79,8 @@
   <script>
     const submitButton = document.querySelector('.btn.submit')
     const inputDoms = Array.from(document.querySelectorAll('.required'))
-    inputDoms.forEach(inpuDom => {
-      inpuDom.addEventListener('input', event => {
+    inputDoms.forEach(inputDom => {
+      inputDom.addEventListener('input', event => {
         const isFilled = inputDoms.filter(d => d.value).length === inputDoms.length
         submitButton.disabled = !isFilled
       })
