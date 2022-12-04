@@ -5,7 +5,25 @@ require_once(dirname(__FILE__) . '/../db/pdo.php');
 $pdo = Database::get();
 $questions = $pdo->query("SELECT * FROM questions")->fetchAll(PDO::FETCH_ASSOC);
 $is_empty = count($questions) === 0;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $pdo->beginTransaction();
+  try {
+    $sql = "DELETE FROM choices WHERE question_id = :question_id";
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindValue(":question_id", $_POST["id"]);
+    $stmt->execute();
 
+    $sql = "DELETE FROM questions WHERE id = :id";
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindValue(":id", $_POST["id"]);
+    $stmt->execute();
+    $pdo->commit();
+    $message = "問題削除に成功しました";
+  } catch(Error $e) {
+    $pdo->rollBack();
+    $message = "問題削除に失敗しました";
+  }
+}
 ?>
 <!DOCTYPE html>
 <html lang="ja">
@@ -35,6 +53,9 @@ $is_empty = count($questions) === 0;
     <main>
       <div class="container">
         <h1 class="mb-4">問題一覧</h1>
+        <?php if(isset($message)) { ?>
+          <p><?= $message ?></p>
+        <?php } ?>
         <?php if(!$is_empty) { ?>
         <table class="table">
           <thead>
@@ -53,7 +74,12 @@ $is_empty = count($questions) === 0;
                     <?= $question["content"]; ?>
                   </a>
                 </td>
-                <td onclick="deleteQuestion(<?= $question['id'] ?>)">削除</td>
+                <td>
+                  <form method="POST">
+                    <input type="hidden" value="<?= $question["id"] ?>" name="id">
+                    <input type="submit" value="削除" class="submit">
+                  </form>
+                </td>
             </tr>
             <?php } ?>
           </tbody>
@@ -64,18 +90,6 @@ $is_empty = count($questions) === 0;
       </div>
     </main>
   </div>
-  <script>
-    const deleteQuestion = async (questionId) => {
-      if (!confirm('削除してもよろしいでしょうか？')) return
-      const res = await fetch(`http://localhost:8080/services/delete_question.php?id=${questionId}`, { method: 'DELETE' });
-      if (res.status === 204) {
-        alert('削除に成功しました')
-        document.getElementById(`question-${questionId}`).remove()
-      } else {
-        alert('削除に失敗しました')
-      }
-    }
-  </script>
 </body>
 
 </html>
