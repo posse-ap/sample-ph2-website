@@ -1,3 +1,34 @@
+<?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $image_name = uniqid(mt_rand(), true) . '.' . substr(strrchr($_FILES['image']['name'], '.'), 1);
+  $image_path = dirname(__FILE__) . '/../../assets/img/quiz/' . $image_name;
+  move_uploaded_file(
+    $_FILES['image']['tmp_name'], 
+    $image_path
+  );
+  
+  $pdo = new PDO('mysql:host=db;dbname=posse', 'root', 'root');
+  $stmt = $pdo->prepare("INSERT INTO questions(content, image, supplement) VALUES(:content, :image, :supplement)");
+  $stmt->execute([
+    "content" => $_POST["content"],
+    "image" => $image_name,
+    "supplement" => $_POST["supplement"]
+  ]);
+  $lastInsertId = $pdo->lastInsertId();
+  
+  $stmt = $pdo->prepare("INSERT INTO choices(name, valid, question_id) VALUES(:name, :valid, :question_id)");
+  
+  for ($i = 0; $i < count($_POST["choices"]); $i++) {
+    $stmt->execute([
+      "name" => $_POST["choices"][$i],
+      "valid" => (int)$_POST['correctChoice'] === $i + 1 ? 1 : 0,
+      "question_id" => $lastInsertId
+    ]);
+  }
+  header("Location: ". "/admin/index.php");
+}
+
+?>
 <!DOCTYPE html>
 <html lang="ja">
 
@@ -25,7 +56,7 @@
     <main>
       <div class="container">
         <h1 class="mb-4">問題作成</h1>
-        <form action="../../services/create_question.php" class="question-form" method="POST" enctype="multipart/form-data">
+        <form class="question-form" method="POST" enctype="multipart/form-data">
           <div class="mb-4">
             <label for="question" class="form-label">問題文:</label>
             <input type="text" name="content" id="question"
