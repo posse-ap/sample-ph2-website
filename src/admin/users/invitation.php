@@ -1,3 +1,66 @@
+<?php
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $email = $_POST["email"];
+  
+  $pdo = new PDO('mysql:host=db;dbname=posse', 'root', 'root');
+  $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+  $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);  
+
+  $sql = "SELECT * FROM users WHERE email = :email";
+  $stmt = $pdo->prepare($sql);
+  $stmt->bindValue(":email", $email);
+  $stmt->execute();
+  $user = $stmt->fetch();
+  
+  if ($user) {
+    $message = "招待済みのメールアドレスです";
+  } else {
+    try {
+      $pdo->beginTransaction();
+    
+      $stmt = $pdo->prepare("INSERT INTO users(email) VALUES(:email)");
+      $stmt->execute([
+        "email" => $email
+      ]);
+      $user_id = $pdo->lastInsertId();
+    
+      $token = hash('sha256',uniqid(rand(),1));
+      $stmt = $pdo->prepare("INSERT INTO user_invitations(user_id, token) VALUES(:user_id, :token)");
+      $stmt->execute([
+        "user_id" => $user_id,
+        "token" => $token
+      ]);
+    
+      mb_language("Japanese");
+      mb_internal_encoding("UTF-8");
+      
+      $mail_from_address = "designare@example.jp";
+      $mail_header = "Content-Type: text/plain; charset=UTF-8 \n".
+      "From: " . $mail_from_address . "\n".
+      "Sender: " . $mail_from_address ." \n".
+      "Return-Path: " . $mail_from_address . " \n".
+      "Reply-To: " . $mail_from_address . " \n".
+      "Content-Transfer-Encoding: BASE64\n";
+      $is_mail_succeeded = mb_send_mail(
+        $email,
+        "POSSEアプリに招待されています",
+        "こちらから登録してください。 http://localhost:8080/admin/auth/signup.php?token=$token&email=$email",
+        $mail_header, "-f ".$mail_from_address);
+    
+      if($is_mail_succeeded){
+        $message = "メールを送信しました";
+      } else {
+        $message = "メールの送信に失敗しました";
+      }
+      $pdo->commit();
+    } catch(PDOException $e) {
+      $pdo->rollBack();
+      $message = $e->getMessage();
+    }
+  }
+}
+?>
 <!DOCTYPE html>
 <html lang="ja">
 
@@ -25,8 +88,13 @@
     <main>
       <div class="container">
         <h1 class="mb-4">ユーザー招待</h1>
-        <input type="email" name="email" class="email">
-        <button type="submit" class="btn submit" disabled onclick="invitation()" >送信</button>
+        <?php if (isset($message)) { ?>
+          <p><?= $message ?></p>
+        <?php } ?>
+        <form action="/admin/users/invitation.php" method="POST" id="form">
+          <input type="email" name="email" class="email">
+          <button type="submit" class="btn submit" disabled onclick="invitation()" >送信</button>
+        </form>
       </div>
     </main>
   </div>
@@ -37,23 +105,8 @@
     emailInput.oninput = (event) => {
       submitButton.disabled = !EMAIL_REGEX.test(event.target.value)
     }
-    const invitation = async () => {
-      const res = await fetch(`/services/create_user.php`, { 
-        method: 'POST',
-        body : JSON.stringify({ email : emailInput.value }),
-        headers:{
-          'Accept': 'application/json, */*',
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
-      });
-      const json = await res.json()
-      console.log('json', json)
-      if (res.status === 201) {
-        alert('ユーザー招待に成功しました')
-        emailInput.value = ''
-      } else {
-        alert(json["error"]["message"])
-      }
+    const invitation = () => {
+      document.querySelector('#form').submit()
     }
   </script>
 </body>
