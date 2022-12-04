@@ -1,8 +1,12 @@
 <?php
+session_start();
 
-require_once(dirname(__FILE__) . '/../db/pdo.php');
+if (isset($_SESSION['message'])) {
+  $message = $_SESSION['message'];
+  unset($_SESSION['message']);
+}
 
-$pdo = Database::get();
+$pdo = new PDO('mysql:host=db;dbname=posse', 'root', 'root');
 $questions = $pdo->query("SELECT * FROM questions")->fetchAll(PDO::FETCH_ASSOC);
 $is_empty = count($questions) === 0;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -53,6 +57,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <main>
       <div class="container">
         <h1 class="mb-4">問題一覧</h1>
+        <?php if(isset($_SESSION['message'])) { ?>
+          <p><?= $_SESSION['message'] ?></p>
+        <?php } ?>
         <?php if(isset($message)) { ?>
           <p><?= $message ?></p>
         <?php } ?>

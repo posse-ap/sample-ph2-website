@@ -1,15 +1,79 @@
 <?php
-session_start();
-$token = isset($_GET['token']) ? $_GET['token'] : null;
-$email = isset($_GET['email']) ? $_GET['email'] : null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  session_start();
+  $email = $_POST["email"];
+  $token = $_POST["token"];
+  $name = $_POST["name"];
+  $password = $_POST["password"];
+  $password_confirm = $_POST["password_confirm"];
 
-if (is_null($token) || is_null($email)) {
-  # Errorページに送る
-  header('Location: /');
-}
+  if ($password !== $password_confirm) {
+    $message = "パスワードが一致しません";
+  } else {
+    $pdo = new PDO('mysql:host=db;dbname=posse', 'root', 'root');
+    $sql = "SELECT * FROM users WHERE email = :email";
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindValue(":email", $email);
+    $stmt->execute();
+    $user = $stmt->fetch();
 
-if(isset($_SESSION["id"])) {
-  header('Location: /admin/index.php');
+    $sql = "SELECT * FROM user_invitations WHERE token = :token AND user_id = :user_id";
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindValue(":token", $token);
+    $stmt->bindValue(":user_id", $user["id"]);
+    $stmt->execute();
+    $user_invitation = $stmt->fetch();
+
+    $diff = (new DateTime())->diff(new DateTime($user_invitation["invited_at"]));
+    $is_expired = $diff->days >= 1;
+    if ($is_expired) {
+      $message = "招待期限が切れています。管理者に連絡してください。";
+    } else {
+      $is_activated = !is_null($user_invitation["activated_at"]);
+      if ($is_activated) {
+        $message = "既に認証済みです。";
+      } else {
+        try {
+          $pdo->beginTransaction();
+
+          $sql = "UPDATE users SET name = :name, password = :password WHERE id = :id";
+          $stmt = $pdo->prepare($sql);
+          $stmt->bindValue(":password", password_hash($password, PASSWORD_DEFAULT));
+          $stmt->bindValue(":name", $name);
+          $stmt->bindValue(":id", $user["id"]);
+          $result = $stmt->execute();
+
+          $sql = "UPDATE user_invitations SET activated_at = :activated_at WHERE user_id = :user_id";
+          $stmt = $pdo->prepare($sql);
+          $stmt->bindValue(":user_id", $user["id"]);
+          $stmt->bindValue(":activated_at", (new DateTime())->format('Y-m-d H:i:s'));
+          $result = $stmt->execute();
+
+          $pdo->commit();
+
+          $_SESSION['id'] = $user["id"];
+          $_SESSION['message'] = "ユーザー登録に成功しました";
+          header('Location: /admin/index.php');
+        } catch(PDOException $e) {
+          $pdo->rollBack();
+          $message = $e->getMessage();
+        }
+      }
+    }
+  }
+} else {
+  session_start();
+  $token = isset($_GET['token']) ? $_GET['token'] : null;
+  $email = isset($_GET['email']) ? $_GET['email'] : null;
+
+  if (is_null($token) || is_null($email)) {
+    # Errorページに送る
+    header('Location: /');
+  }
+
+  if(isset($_SESSION["id"])) {
+    header('Location: /admin/index.php');
+  }
 }
 
 ?>
@@ -41,24 +105,30 @@ if(isset($_SESSION["id"])) {
     <main>
       <div class="container">
         <h1 class="mb-4">ユーザー登録</h1>
-          <div class="mb-3">
-            <label for="name" class="form-label">名前</label>
-            <input type="text" name="name" id="name" class="form-control">
-          </div>
-          <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <input type="text" name="email" class="email form-control" value="<?= $email ?>" id="email" disabled>
-          </div>
-          <div class="mb-3">
-            <label for="password" class="form-label">パスワード</label>
-            <input type="password" name="password" id="password" class="form-control">
-          </div>
-          <div class="mb-3">
-            <label for="password_confirm" class="form-label">パスワード(確認)</label>
-            <input type="password" name="password_confirm" id="password_confirm" class="form-control">
-          </div>
-          <input type="hidden" name="token" id="token" value="<?= $token ?>">
-          <button type="submit" disabled class="btn submit" onclick="signup()" >登録</button>
+          <?php if (isset($message)) { ?>
+            <p><?= $message ?></p>
+          <?php } ?>
+          <form method="POST">
+            <div class="mb-3">
+              <label for="name" class="form-label">名前</label>
+              <input type="text" name="name" id="name" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label for="email" class="form-label">Email</label>
+              <input type="text" name="disabled_email" class="email form-control" value="<?= $email ?>" id="email" disabled>
+            </div>
+            <div class="mb-3">
+              <label for="password" class="form-label">パスワード</label>
+              <input type="password" name="password" id="password" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label for="password_confirm" class="form-label">パスワード(確認)</label>
+              <input type="password" name="password_confirm" id="password_confirm" class="form-control">
+            </div>
+            <input type="hidden" name="token" id="token" value="<?= $token ?>">
+            <input type="hidden" name="email" value="<?= $email ?>">
+            <button type="submit" disabled class="btn submit" >登録</button>
+          </form>
       </div>
     </main>
   </div>
