@@ -1,3 +1,26 @@
+<?php
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $email = $_POST["email"];
+  $password = $_POST["password"];
+
+  $pdo = new PDO('mysql:host=db;dbname=posse', 'root', 'root');
+  $sql = "SELECT * FROM users WHERE email = :email";
+  $stmt = $pdo->prepare($sql);
+  $stmt->bindValue(":email", $email);
+  $stmt->execute();
+  $user = $stmt->fetch();
+
+  if (!$user || !password_verify($password, $user["password"])) {
+    $message = "認証情報が正しくありません";
+  } else {
+    session_start();
+    $_SESSION['id'] = $user["id"];
+    $_SESSION['name'] = $user["name"];
+    $message = "ログインに成功しました";
+  }
+}
+?>
 <!DOCTYPE html>
 <html lang="ja">
 
@@ -26,15 +49,20 @@
     <main>
       <div class="container">
         <h1 class="mb-4">ログイン</h1>
-          <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <input type="text" name="email" class="email form-control" id="email">
-          </div>
-          <div class="mb-3">
-            <label for="password" class="form-label">パスワード</label>
-            <input type="password" name="password" id="password" class="form-control">
-          </div>
-          <button type="submit" disabled class="btn submit" onclick="signin()" >ログイン</button>
+          <?php if (isset($message)) { ?>
+            <p><?= $message ?></p>
+          <?php } ?>
+          <form method="POST">
+            <div class="mb-3">
+              <label for="email" class="form-label">Email</label>
+              <input type="text" name="email" class="email form-control" id="email">
+            </div>
+            <div class="mb-3">
+              <label for="password" class="form-label">パスワード</label>
+              <input type="password" name="password" id="password" class="form-control">
+            </div>
+            <button type="submit" disabled class="btn submit" >ログイン</button>
+          </form>
       </div>
     </main>
   </div>
@@ -49,31 +77,6 @@
         submitButton.disabled = !(isFilled && EMAIL_REGEX.test(emailInput.value))
       })
     })
-    const signin = async () => {
-      try {
-        const res = await fetch(`/services/signin.php`, { 
-          method: 'POST',
-          body : JSON.stringify({ 
-            email : document.querySelector('#email').value,
-            password : document.querySelector('#password').value,
-          }),
-          headers:{
-            'Accept': 'application/json, */*',
-            "Content-Type": "application/x-www-form-urlencoded"
-          },
-        });
-        const json = await res.json();
-        if (res.status === 401) {
-          alert(json["error"]["message"])
-        }
-        if (res.status === 200) {
-          alert('ログインに成功しました')
-          location.href = '/admin/index.php'
-        } 
-      } catch (e) {
-        console.error(e)
-      }
-    }
   </script>
 </body>
 
