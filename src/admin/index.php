@@ -1,11 +1,13 @@
 <?php
-
 require_once(dirname(__FILE__) . '/../db/pdo.php');
 
-$pdo = Database::get();
-$questions = $pdo->query("SELECT * FROM questions")->fetchAll(PDO::FETCH_ASSOC);
-$is_empty = count($questions) === 0;
-
+if (!isset($_SESSION['id'])) {
+  header('Location: /admin/auth/signin.php');
+} else {
+  $pdo = Database::get();
+  $questions = $pdo->query("SELECT * FROM questions")->fetchAll(PDO::FETCH_ASSOC);
+  $is_empty = count($questions) === 0;
+}
 ?>
 <!DOCTYPE html>
 <html lang="ja">
