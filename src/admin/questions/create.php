@@ -1,3 +1,9 @@
+<?php
+
+if (!isset($_SESSION['id'])) {
+  header('Location: /admin/auth/signin.php');
+}
+?>
 <!DOCTYPE html>
 <html lang="ja">
 

@@ -1,20 +1,22 @@
 <?php
-
 require_once(dirname(__FILE__) . '/../../db/pdo.php');
 
-$pdo = Database::get();
-$sql = "SELECT * FROM questions WHERE id = :id";
-$stmt = $pdo->prepare($sql);
-$stmt->bindValue(":id", $_REQUEST["id"]);
-$stmt->execute();
-$question = $stmt->fetch();
+if (!isset($_SESSION['id'])) {
+  header('Location: /admin/auth/signin.php');
+} else {
+  $pdo = Database::get();
+  $sql = "SELECT * FROM questions WHERE id = :id";
+  $stmt = $pdo->prepare($sql);
+  $stmt->bindValue(":id", $_REQUEST["id"]);
+  $stmt->execute();
+  $question = $stmt->fetch();
 
-$sql = "SELECT * FROM choices WHERE question_id = :question_id";
-$stmt = $pdo->prepare($sql);
-$stmt->bindValue(":question_id", $_REQUEST["id"]);
-$stmt->execute();
-$choices = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+  $sql = "SELECT * FROM choices WHERE question_id = :question_id";
+  $stmt = $pdo->prepare($sql);
+  $stmt->bindValue(":question_id", $_REQUEST["id"]);
+  $stmt->execute();
+  $choices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 ?>
 <!DOCTYPE html>
 <html lang="ja">
