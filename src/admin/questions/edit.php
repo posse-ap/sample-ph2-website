@@ -1,66 +1,69 @@
 <?php
-
-$pdo = new PDO('mysql:host=db;dbname=posse', 'root', 'root');
-$sql = "SELECT * FROM questions WHERE id = :id";
-$stmt = $pdo->prepare($sql);
-$stmt->bindValue(":id", $_REQUEST["id"]);
-$stmt->execute();
-$question = $stmt->fetch();
-
-$sql = "SELECT * FROM choices WHERE question_id = :question_id";
-$stmt = $pdo->prepare($sql);
-$stmt->bindValue(":question_id", $_REQUEST["id"]);
-$stmt->execute();
-$choices = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $params = [
-    "content" => $_POST["content"],
-    "supplement" => $_POST["supplement"],
-    "id" => $_POST["question_id"],
-  ];
-  $set_query = "SET content = :content, supplement = :supplement";
-  if ($_FILES["image"]["tmp_name"] !== "") {
-    $set_query .= ", image = :image";
-    $params["image"] = "";
+if (!isset($_SESSION['id'])) {
+  header('Location: /admin/auth/signin.php');
+} else {
+  $pdo = new PDO('mysql:host=db;dbname=posse', 'root', 'root');
+  $sql = "SELECT * FROM questions WHERE id = :id";
+  $stmt = $pdo->prepare($sql);
+  $stmt->bindValue(":id", $_REQUEST["id"]);
+  $stmt->execute();
+  $question = $stmt->fetch();
+  
+  $sql = "SELECT * FROM choices WHERE question_id = :question_id";
+  $stmt = $pdo->prepare($sql);
+  $stmt->bindValue(":question_id", $_REQUEST["id"]);
+  $stmt->execute();
+  $choices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+  
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $params = [
+      "content" => $_POST["content"],
+      "supplement" => $_POST["supplement"],
+      "id" => $_POST["question_id"],
+    ];
+    $set_query = "SET content = :content, supplement = :supplement";
+    if ($_FILES["image"]["tmp_name"] !== "") {
+      $set_query .= ", image = :image";
+      $params["image"] = "";
+    }
+    
+    $sql = "UPDATE questions $set_query WHERE id = :id";
+    
+    $pdo->beginTransaction();
+    try { 
+      if(isset($params["image"])) {
+        $image_name = uniqid(mt_rand(), true) . '.' . substr(strrchr($_FILES['image']['name'], '.'), 1);
+        $image_path = dirname(__FILE__) . '/../../assets/img/quiz/' . $image_name;
+        move_uploaded_file(
+          $_FILES['image']['tmp_name'], 
+          $image_path
+        );
+        $params["image"] = $image_name;
+      }
+    
+      $stmt = $pdo->prepare($sql);
+      $result = $stmt->execute($params);
+    
+      $sql = "DELETE FROM choices WHERE question_id = :question_id ";
+      $stmt = $pdo->prepare($sql);
+      $stmt->bindValue(":question_id", $_POST["question_id"]);
+      $stmt->execute();
+    
+      $stmt = $pdo->prepare("INSERT INTO choices(name, valid, question_id) VALUES(:name, :valid, :question_id)");
+      for ($i = 0; $i < count($_POST["choices"]); $i++) {
+        $stmt->execute([
+          "name" => $_POST["choices"][$i],
+          "valid" => (int)$_POST['correctChoice'] === $i + 1 ? 1 : 0,
+          "question_id" => $_POST["question_id"]
+        ]);
+      }
+      $pdo->commit();
+    } catch(Error $e) {
+      $pdo->rollBack();
+    }
   }
   
-  $sql = "UPDATE questions $set_query WHERE id = :id";
-  
-  $pdo->beginTransaction();
-  try { 
-    if(isset($params["image"])) {
-      $image_name = uniqid(mt_rand(), true) . '.' . substr(strrchr($_FILES['image']['name'], '.'), 1);
-      $image_path = dirname(__FILE__) . '/../../assets/img/quiz/' . $image_name;
-      move_uploaded_file(
-        $_FILES['image']['tmp_name'], 
-        $image_path
-      );
-      $params["image"] = $image_name;
-    }
-  
-    $stmt = $pdo->prepare($sql);
-    $result = $stmt->execute($params);
-  
-    $sql = "DELETE FROM choices WHERE question_id = :question_id ";
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindValue(":question_id", $_POST["question_id"]);
-    $stmt->execute();
-  
-    $stmt = $pdo->prepare("INSERT INTO choices(name, valid, question_id) VALUES(:name, :valid, :question_id)");
-    for ($i = 0; $i < count($_POST["choices"]); $i++) {
-      $stmt->execute([
-        "name" => $_POST["choices"][$i],
-        "valid" => (int)$_POST['correctChoice'] === $i + 1 ? 1 : 0,
-        "question_id" => $_POST["question_id"]
-      ]);
-    }
-    $pdo->commit();
-  } catch(Error $e) {
-    $pdo->rollBack();
-  }
 }
-
 ?>
 <!DOCTYPE html>
 <html lang="ja">

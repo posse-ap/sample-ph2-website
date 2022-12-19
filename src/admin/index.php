@@ -1,31 +1,35 @@
 <?php
 session_start();
 
-if (isset($_SESSION['message'])) {
-  $message = $_SESSION['message'];
-  unset($_SESSION['message']);
-}
+if (!isset($_SESSION['id'])) {
+  header('Location: /admin/auth/signin.php');
+} else {
+  if (isset($_SESSION['message'])) {
+    $message = $_SESSION['message'];
+    unset($_SESSION['message']);
+  }
 
-$pdo = new PDO('mysql:host=db;dbname=posse', 'root', 'root');
-$questions = $pdo->query("SELECT * FROM questions")->fetchAll(PDO::FETCH_ASSOC);
-$is_empty = count($questions) === 0;
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $pdo->beginTransaction();
-  try {
-    $sql = "DELETE FROM choices WHERE question_id = :question_id";
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindValue(":question_id", $_POST["id"]);
-    $stmt->execute();
+  $pdo = new PDO('mysql:host=db;dbname=posse', 'root', 'root');
+  $questions = $pdo->query("SELECT * FROM questions")->fetchAll(PDO::FETCH_ASSOC);
+  $is_empty = count($questions) === 0;
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $pdo->beginTransaction();
+    try {
+      $sql = "DELETE FROM choices WHERE question_id = :question_id";
+      $stmt = $pdo->prepare($sql);
+      $stmt->bindValue(":question_id", $_POST["id"]);
+      $stmt->execute();
 
-    $sql = "DELETE FROM questions WHERE id = :id";
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindValue(":id", $_POST["id"]);
-    $stmt->execute();
-    $pdo->commit();
-    $message = "問題削除に成功しました";
-  } catch(Error $e) {
-    $pdo->rollBack();
-    $message = "問題削除に失敗しました";
+      $sql = "DELETE FROM questions WHERE id = :id";
+      $stmt = $pdo->prepare($sql);
+      $stmt->bindValue(":id", $_POST["id"]);
+      $stmt->execute();
+      $pdo->commit();
+      $message = "問題削除に成功しました";
+    } catch(Error $e) {
+      $pdo->rollBack();
+      $message = "問題削除に失敗しました";
+    }
   }
 }
 ?>
