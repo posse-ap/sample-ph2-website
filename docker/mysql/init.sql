@@ -27,7 +27,7 @@ CREATE TABLE users (
   password VARCHAR(255)
 ) CHARSET=utf8;
 
-insert into users (name, email, password) values ("管理者1", "admin@example.com", "password");
+insert into users (name, email, password) values ("管理者1", "admin@example.com", "$2y$10$MZu3sCYS7xcWBaPuCBlxjexYjQFv.Xue87x2E9RB0XjLRedmYF0AG");
 
 DROP TABLE IF EXISTS user_invitations;
 CREATE TABLE user_invitations (
