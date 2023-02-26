@@ -35,3 +35,9 @@ https://posse-ap.github.io/sample-ph1-website/quiz3/
 /assets/styles/common.css
 /assets/scripts/quiz3.js
 ```
+
+#### 認証情報
+以下の初期ユーザーが自動で作成されるので、このユーザーで管理画面にログインできます。
+name:  管理者1
+email: admin@example.com
+pass:  password
