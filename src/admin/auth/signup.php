@@ -144,29 +144,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         submitButton.disabled = !(isFilled && isPasswordMatch)
       })
     })
-    const signup = async () => {
-      const res = await fetch(`/services/signup.php`, { 
-        method: 'PATCH',
-        body : JSON.stringify({ 
-          name : document.querySelector('#name').value,
-          email : document.querySelector('#email').value,
-          password : document.querySelector('#password').value,
-          password_confirm : document.querySelector('#password_confirm').value,
-          token : document.querySelector('#token').value,
-        }),
-        headers:{
-          'Accept': 'application/json, */*',
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
-      });
-      const json = await res.json()
-      if (res.status === 200) {
-        alert(json["message"])
-        location.href = '/admin/index.php'
-      } else {
-        alert(json["error"]["message"])
-      }
-    }
   </script>
 </body>
 
