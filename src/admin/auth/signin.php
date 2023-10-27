@@ -17,7 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     session_start();
     $_SESSION['id'] = $user["id"];
     $_SESSION['name'] = $user["name"];
-    $message = "ログインに成功しました";
+    header('Location: ../index.php');
+    exit();
   }
 }
 ?>
