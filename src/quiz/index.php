@@ -6,9 +6,14 @@ $pdo = Database::get();
 $questions = $pdo->query("SELECT * FROM questions")->fetchAll(PDO::FETCH_ASSOC);
 $choices = $pdo->query("SELECT * FROM choices")->fetchAll(PDO::FETCH_ASSOC);
 
-foreach($choices as $key => $choice) {
-  $index = array_search($choice["question_id"], array_column($questions, 'id'));
-  $questions[$index]["choices"][] = $choice;
+foreach ($questions as $qKey => $question) {
+  $question["choices"] = [];
+  foreach ($choices as $cKey => $choice) {
+    if ($choice["question_id"] == $question["id"]) {
+      $question["choices"][] = $choice;
+    }
+  }
+  $questions[$qKey] = $question;
 }
 
 ?>
