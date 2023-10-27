@@ -43,9 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 
 <body>
-  <header>
-    <div>posse</div>
-  </header>
+  <?php include(dirname(__FILE__) . '/../components/admin/header.php'); ?>
   <div class="wrapper">
     <main>
       <div class="container">
