@@ -66,3 +66,12 @@ button.submit {
   background-color: #18978F;
   color: #fff;
 }
+
+.form-choices-container {
+  display: flex;
+}
+
+.form-check-container {
+  display: flex;
+  gap: 10px;
+}
