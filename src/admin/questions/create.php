@@ -15,9 +15,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     "supplement" => $_POST["supplement"]
   ]);
   $lastInsertId = $pdo->lastInsertId();
-
-  $stmt = $pdo->prepare("INSERT INTO choices(name, valid, question_id) VALUES(:name, :valid, :question_id)");
   
+  $stmt = $pdo->prepare("INSERT INTO choices(name, valid, question_id) VALUES(:name, :valid, :question_id)");
+
   for ($i = 0; $i < count($_POST["choices"]); $i++) {
     $stmt->execute([
       "name" => $_POST["choices"][$i],
