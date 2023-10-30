@@ -6,7 +6,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $_FILES['image']['tmp_name'], 
     $image_path
   );
-
+  
   $pdo = new PDO('mysql:host=db;dbname=posse', 'root', 'root');
   $stmt = $pdo->prepare("INSERT INTO questions(content, image, supplement) VALUES(:content, :image, :supplement)");
   $stmt->execute([
@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     "supplement" => $_POST["supplement"]
   ]);
   $lastInsertId = $pdo->lastInsertId();
-  
+
   $stmt = $pdo->prepare("INSERT INTO choices(name, valid, question_id) VALUES(:name, :valid, :question_id)");
 
   for ($i = 0; $i < count($_POST["choices"]); $i++) {
