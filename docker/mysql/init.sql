@@ -3,11 +3,11 @@ CREATE DATABASE posse;
 USE posse;
 
 CREATE TABLE questions (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    content VARCHAR(255) NOT NULL,
-    image VARCHAR(255) NOT NULL,
-    supplement VARCHAR(255)
-);
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  content VARCHAR(255) NOT NULL,
+  image VARCHAR(255) NOT NULL,
+  supplement VARCHAR(255)
+) CHARSET=utf8;
 
 -- データの追加
 INSERT INTO questions (content, image, supplement) VALUES
@@ -20,11 +20,11 @@ INSERT INTO questions (content, image, supplement) VALUES
 
 -- 選択肢テーブルの作成
 CREATE TABLE choices (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    question_id INT NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    valid TINYINT(1) NOT NULL
-);
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  question_id INT NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  valid TINYINT(1) NOT NULL
+) CHARSET=utf8;
 
 -- データの追加
 INSERT INTO choices (question_id, name, valid) VALUES
