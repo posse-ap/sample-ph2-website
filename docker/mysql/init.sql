@@ -23,7 +23,8 @@ CREATE TABLE choices (
   id INT AUTO_INCREMENT PRIMARY KEY,
   question_id INT NOT NULL,
   name VARCHAR(255) NOT NULL,
-  valid TINYINT(1) NOT NULL
+  valid TINYINT(1) NOT NULL,
+  FOREIGN KEY (question_id) REFERENCES questions(id)
 ) CHARSET=utf8;
 
 -- データの追加
