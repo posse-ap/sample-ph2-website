@@ -17,7 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     session_start();
     $_SESSION['id'] = $user["id"];
     $_SESSION['name'] = $user["name"];
-    $message = "ログインに成功しました";
+    header('Location: ../index.php');
+    exit();
   }
 }
 ?>
@@ -42,9 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 
 <body>
-  <header>
-    <div>posse</div>
-  </header>
+  <?php include(dirname(__FILE__) . '/../../components/admin/header.php'); ?>
   <div class="wrapper">
     <main>
       <div class="container">
