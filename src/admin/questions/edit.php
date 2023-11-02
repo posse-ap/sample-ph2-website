@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 if (!isset($_SESSION['id'])) {
   header('Location: /admin/auth/signin.php');
 } else {
@@ -102,25 +104,29 @@ if (!isset($_SESSION['id'])) {
           </div>
           <div class="mb-4">
             <label class="form-label">選択肢:</label>
-            <?php foreach($choices as $key => $choice) { ?>
-              <input type="text" name="choices[]" class="required form-control mb-2" placeholder="選択肢を入力してください" value=<?= $choice["name"] ?>>
-            <?php } ?>
+            <div class="form-choices-container">
+              <?php foreach($choices as $key => $choice) { ?>
+                <input type="text" name="choices[]" class="required form-control mb-2" placeholder="選択肢を入力してください" value=<?= $choice["name"] ?>>
+              <?php } ?>
+            </div>
           </div>
           <div class="mb-4">
             <label class="form-label">正解の選択肢</label>
-            <?php foreach($choices as $key => $choice) { ?>
-              <div class="form-check">
-                <input 
-                  class="form-check-input" 
-                  type="radio" name="correctChoice" id="correctChoice<?= $key ?>" 
-                  value="<?= $key + 1 ?>"
-                  <?= $choice["valid"] === 1 ? 'checked' : '' ?>
-                >
-                <label class="form-check-label" for="correctChoice1">
-                  選択肢<?= $key + 1 ?>
-                </label>
-              </div>
-            <?php } ?>
+            <div class="form-check-container">
+              <?php foreach($choices as $key => $choice) { ?>
+                <div class="form-check">
+                  <input 
+                    class="form-check-input" 
+                    type="radio" name="correctChoice" id="correctChoice<?= $key ?>" 
+                    value="<?= $key + 1 ?>"
+                    <?= $choice["valid"] === 1 ? 'checked' : '' ?>
+                  >
+                  <label class="form-check-label" for="correctChoice1">
+                    選択肢<?= $key + 1 ?>
+                  </label>
+                </div>
+              <?php } ?>
+            </div>
           </div>
           <div class="mb-4">
             <label for="question" class="form-label">問題の画像</label>
