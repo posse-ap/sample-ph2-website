@@ -13,8 +13,9 @@ if (!isset($_SESSION['id'])) {
   $questions = $pdo->query("SELECT * FROM questions")->fetchAll(PDO::FETCH_ASSOC);
   $is_empty = count($questions) === 0;
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $pdo->beginTransaction();
     try {
+      $pdo->beginTransaction();
+      
       $sql = "DELETE FROM choices WHERE question_id = :question_id";
       $stmt = $pdo->prepare($sql);
       $stmt->bindValue(":question_id", $_POST["id"]);
@@ -24,11 +25,12 @@ if (!isset($_SESSION['id'])) {
       $stmt = $pdo->prepare($sql);
       $stmt->bindValue(":id", $_POST["id"]);
       $stmt->execute();
+      
       $pdo->commit();
       $message = "問題削除に成功しました";
-    } catch(Error $e) {
+    } catch (PDOException $e) {
       $pdo->rollBack();
-      $message = "問題削除に失敗しました";
+      error_log($e->getMessage());
     }
   }
 }
