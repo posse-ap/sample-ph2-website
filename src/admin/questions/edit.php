@@ -36,7 +36,6 @@ if (!isset($_SESSION['id'])) {
           $stmt->bindValue(":id", $_POST["question_id"]);
           $stmt->execute();
         } else {
-          // ファイルの移動に失敗した場合の処理
           throw new Exception("Failed to upload the image.");
         }
       }
