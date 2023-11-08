@@ -20,45 +20,44 @@ if (!isset($_SESSION['id'])) {
   $choices = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // $params = [
-    //   "content" => $_POST["content"],
-    //   "supplement" => $_POST["supplement"],
-    //   "id" => $_POST["question_id"],
-    // ];
-    
-    // 画像がアップロードされたかを確認し、必要な処理を行う
-    $imageUpdated = false;
-    // if ($_FILES["image"]["tmp_name"] !== "") {
-    //     $image_name = uniqid(mt_rand(), true) . '.' . pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-    //     $image_path = dirname(__FILE__) . '/../../assets/img/quiz/' . $image_name;
-    //     $imageUpdated = move_uploaded_file($_FILES['image']['tmp_name'], $image_path);
-    //     $params["image"] = $image_name;
-    // }
-
-    $set_query = "SET content = :content, supplement = :supplement" . ($imageUpdated ? ", image = :image" : "");
-    $sql = "UPDATE questions $set_query WHERE id = :id";
 
     try {
       $pdo->beginTransaction();
-      // 問題レコードの更新
+
+      // 問題レコードの更新（画像）
+      if ($_FILES["image"]["tmp_name"] !== "") {
+        $image_name = uniqid(mt_rand(), true) . '.' . substr(strrchr($_FILES['image']['name'], '.'), 1);
+        $image_path = dirname(__FILE__) . '/../../assets/img/quiz/' . $image_name;
+        // ファイルが正常に移動されたら、データベースを更新する
+        if (move_uploaded_file($_FILES['image']['tmp_name'], $image_path)) {
+          $sql = "UPDATE questions SET image = :image WHERE id = :id";
+          $stmt = $pdo->prepare($sql);
+          $stmt->bindValue(":image", $image_name);
+          $stmt->bindValue(":id", $_POST["question_id"]);
+          $stmt->execute();
+        } else {
+          // ファイルの移動に失敗した場合の処理
+          throw new Exception("Failed to upload the image.");
+        }
+      }
+
+      // 問題レコードの更新（画像以外）
       $sql = "UPDATE questions SET content = :content, supplement = :supplement WHERE id = :id";
       $stmt = $pdo->prepare($sql);
       $stmt->bindValue(":content", $_POST["content"]);
       $stmt->bindValue(":supplement", $_POST["supplement"]);
       $stmt->bindValue(":id", $_POST["question_id"]);
       $stmt->execute();
+
       // 選択肢レコードの更新
       $sql = "UPDATE choices SET name = :name, valid = :valid WHERE id = :id AND question_id = :question_id";
       // 各選択肢についてループ
       for ($i = 0; $i < count($_POST["choices"]); $i++) {
-        // UPDATE文の準備
         $stmt = $pdo->prepare($sql);
-        // パラメータをバインド
         $stmt->bindValue(":name", $_POST["choices"][$i]);
         $stmt->bindValue(":valid", (int)($_POST['correctChoice'] == $_POST["choice_ids"][$i]) ? 1 : 0);
         $stmt->bindValue(":id", $_POST["choice_ids"][$i]);
         $stmt->bindValue(":question_id", $_POST["question_id"]);
-        // SQL文の実行
         $stmt->execute();
       }
       $pdo->commit();
