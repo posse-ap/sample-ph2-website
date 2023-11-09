@@ -5,6 +5,31 @@ if (!isset($_SESSION['id'])) {
   header('Location: /admin/auth/signin.php');
 } else { 
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+      // ファイルアップロードのバリデーション
+    if (!isset($_FILES['image']) || $_FILES['image']['error'] != UPLOAD_ERR_OK) {
+      die("ファイルがアップロードされていない、またはアップロードでエラーが発生しました。");
+    }
+
+    // ファイルサイズのバリデーション
+    if ($_FILES['image']['size'] > 5000000) {
+      die("ファイルサイズが大きすぎます。");
+    }
+
+    // 許可された拡張子かチェック
+    $allowed_ext = array('jpg', 'jpeg', 'png', 'gif');
+    $file_ext = strtolower(end(explode('.', $_FILES['image']['name'])));
+    if (!in_array($file_ext, $allowed_ext)) {
+      die("許可されていないファイル形式です。");
+    }
+
+    // ファイルの内容が画像であるかをチェック
+    $allowed_mime = array('image/jpeg', 'image/png', 'image/gif');
+    $file_mime = mime_content_type($_FILES['image']['tmp_name']);
+    if (!in_array($file_mime, $allowed_mime)) {
+      die("許可されていないファイル形式です。");
+    }
+  
     $image_name = uniqid(mt_rand(), true) . '.' . substr(strrchr($_FILES['image']['name'], '.'), 1);
     $image_path = dirname(__FILE__) . '/../../assets/img/quiz/' . $image_name;
     move_uploaded_file($_FILES['image']['tmp_name'], $image_path);
