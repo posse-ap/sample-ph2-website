@@ -25,6 +25,27 @@ if (!isset($_SESSION['id'])) {
 
       // 問題レコードの更新（画像）
       if ($_FILES["image"]["tmp_name"] !== "") {
+
+        if ($_FILES['image']['error'] != UPLOAD_ERR_OK) {
+          throw new Exception("ファイルがアップロードされていない、またはアップロードでエラーが発生しました。");
+        }
+
+        if ($_FILES['image']['size'] > 5000000) {
+          throw new Exception("ファイルサイズが大きすぎます。");
+        }
+
+        $allowed_ext = array('jpg', 'jpeg', 'png', 'gif');
+        $file_ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
+        if (!in_array($file_ext, $allowed_ext)) {
+          throw new Exception("許可されていないファイル形式です。");
+        }
+
+        $allowed_mime = array('image/jpeg', 'image/png', 'image/gif');
+        $file_mime = mime_content_type($_FILES['image']['tmp_name']);
+        if (!in_array($file_mime, $allowed_mime)) {
+          throw new Exception("許可されていないファイル形式です。");
+        }
+
         $image_name = uniqid(mt_rand(), true) . '.' . substr(strrchr($_FILES['image']['name'], '.'), 1);
         $image_path = dirname(__FILE__) . '/../../assets/img/quiz/' . $image_name;
         // ファイルが正常に移動されたら、データベースを更新する

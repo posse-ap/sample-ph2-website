@@ -6,7 +6,7 @@ if (!isset($_SESSION['id'])) {
 } else { 
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-      // ファイルアップロードのバリデーション
+    // ファイルアップロードのバリデーション
     if (!isset($_FILES['image']) || $_FILES['image']['error'] != UPLOAD_ERR_OK) {
       die("ファイルがアップロードされていない、またはアップロードでエラーが発生しました。");
     }
