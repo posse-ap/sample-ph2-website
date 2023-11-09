@@ -68,11 +68,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <form method="POST">
             <div class="mb-3">
               <label for="email" class="form-label">Email</label>
-              <input type="text" name="email" class="email form-control" id="email" required>
+              <input type="text" name="email" class="email form-control" id="email">
             </div>
             <div class="mb-3">
               <label for="password" class="form-label">パスワード</label>
-              <input type="password" name="password" id="password" class="form-control" required>
+              <input type="password" name="password" id="password" class="form-control">
             </div>
             <button type="submit" disabled class="btn submit" >ログイン</button>
           </form>
