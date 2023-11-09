@@ -15,7 +15,7 @@ if (!isset($_SESSION['id'])) {
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
       $pdo->beginTransaction();
-      
+
       $sql = "DELETE FROM choices WHERE question_id = :question_id";
       $stmt = $pdo->prepare($sql);
       $stmt->bindValue(":question_id", $_POST["id"]);
@@ -30,7 +30,7 @@ if (!isset($_SESSION['id'])) {
       $message = "問題削除に成功しました";
     } catch (PDOException $e) {
       $pdo->rollBack();
-      error_log($e->getMessage());
+      $message = "問題削除に失敗しました";
     }
   }
 }
