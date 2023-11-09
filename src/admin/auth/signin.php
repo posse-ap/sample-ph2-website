@@ -6,6 +6,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   // バリデーション
   if (empty($_POST['email'])) {
     $message = 'メールアドレスは必須項目です。';
+  } elseif (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
+    $message = '正しいEメールアドレスを指定してください。';
   } else if (empty($_POST['password'])) {
     $message = 'パスワードは必須項目です。';
   } else {
