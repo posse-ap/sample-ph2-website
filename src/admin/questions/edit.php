@@ -20,7 +20,6 @@ if (!isset($_SESSION['id'])) {
   $choices = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
     try {
       $pdo->beginTransaction();
 
