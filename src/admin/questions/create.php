@@ -3,55 +3,59 @@ session_start();
 
 if (!isset($_SESSION['id'])) {
   header('Location: /admin/auth/signin.php');
-} else { 
+} else {
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+      // ファイルアップロードのバリデーション
+      if (!isset($_FILES['image']) || $_FILES['image']['error'] != UPLOAD_ERR_OK) {
+        throw new Exception("ファイルがアップロードされていない、またはアップロードでエラーが発生しました。");
+      }
 
-    // ファイルアップロードのバリデーション
-    if (!isset($_FILES['image']) || $_FILES['image']['error'] != UPLOAD_ERR_OK) {
-      die("ファイルがアップロードされていない、またはアップロードでエラーが発生しました。");
-    }
+      // ファイルサイズのバリデーション
+      if ($_FILES['image']['size'] > 5000000) {
+        throw new Exception("ファイルサイズが大きすぎます。");
+      }
 
-    // ファイルサイズのバリデーション
-    if ($_FILES['image']['size'] > 5000000) {
-      die("ファイルサイズが大きすぎます。");
-    }
+      // 許可された拡張子かチェック
+      $allowed_ext = array('jpg', 'jpeg', 'png', 'gif');
+      $file_ext = strtolower(end(explode('.', $_FILES['image']['name'])));
+      if (!in_array($file_ext, $allowed_ext)) {
+        throw new Exception("許可されていないファイル形式です。");
+      }
 
-    // 許可された拡張子かチェック
-    $allowed_ext = array('jpg', 'jpeg', 'png', 'gif');
-    $file_ext = strtolower(end(explode('.', $_FILES['image']['name'])));
-    if (!in_array($file_ext, $allowed_ext)) {
-      die("許可されていないファイル形式です。");
-    }
+      // ファイルの内容が画像であるかをチェック
+      $allowed_mime = array('image/jpeg', 'image/png', 'image/gif');
+      $file_mime = mime_content_type($_FILES['image']['tmp_name']);
+      if (!in_array($file_mime, $allowed_mime)) {
+        throw new Exception("許可されていないファイル形式です。");
+      }
 
-    // ファイルの内容が画像であるかをチェック
-    $allowed_mime = array('image/jpeg', 'image/png', 'image/gif');
-    $file_mime = mime_content_type($_FILES['image']['tmp_name']);
-    if (!in_array($file_mime, $allowed_mime)) {
-      die("許可されていないファイル形式です。");
-    }
-  
-    $image_name = uniqid(mt_rand(), true) . '.' . substr(strrchr($_FILES['image']['name'], '.'), 1);
-    $image_path = dirname(__FILE__) . '/../../assets/img/quiz/' . $image_name;
-    move_uploaded_file($_FILES['image']['tmp_name'], $image_path);
-    
-    $pdo = new PDO('mysql:host=db;dbname=posse', 'root', 'root');
-    $stmt = $pdo->prepare("INSERT INTO questions(content, image, supplement) VALUES(:content, :image, :supplement)");
-    $stmt->execute([
-      "content" => $_POST["content"],
-      "image" => $image_name,
-      "supplement" => $_POST["supplement"]
-    ]);
-    $lastInsertId = $pdo->lastInsertId();
-  
-    $stmt = $pdo->prepare("INSERT INTO choices(name, valid, question_id) VALUES(:name, :valid, :question_id)");
-  
-    for ($i = 0; $i < count($_POST["choices"]); $i++) {
+      $image_name = uniqid(mt_rand(), true) . '.' . substr(strrchr($_FILES['image']['name'], '.'), 1);
+      $image_path = dirname(__FILE__) . '/../../assets/img/quiz/' . $image_name;
+      move_uploaded_file($_FILES['image']['tmp_name'], $image_path);
+
+      $pdo = new PDO('mysql:host=db;dbname=posse', 'root', 'root');
+      $stmt = $pdo->prepare("INSERT INTO questions(content, image, supplement) VALUES(:content, :image, :supplement)");
       $stmt->execute([
-        "name" => $_POST["choices"][$i],
-        "valid" => (int)$_POST['correctChoice'] === $i + 1 ? 1 : 0,
-        "question_id" => $lastInsertId
+        "content" => $_POST["content"],
+        "image" => $image_name,
+        "supplement" => $_POST["supplement"]
       ]);
+      $lastInsertId = $pdo->lastInsertId();
+
+      $stmt = $pdo->prepare("INSERT INTO choices(name, valid, question_id) VALUES(:name, :valid, :question_id)");
+
+      for ($i = 0; $i < count($_POST["choices"]); $i++) {
+        $stmt->execute([
+          "name" => $_POST["choices"][$i],
+          "valid" => (int)$_POST['correctChoice'] === $i + 1 ? 1 : 0,
+          "question_id" => $lastInsertId
+        ]);
+      }
+    } catch (PDOException $e) {
+      error_log($e->getMessage());
     }
+
     header("Location: " . "/admin/index.php");
     exit;
   }
