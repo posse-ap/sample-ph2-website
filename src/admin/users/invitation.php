@@ -1,7 +1,7 @@
 <?php
 if (!isset($_SESSION['id'])) {
   header('Location: /admin/auth/signin.php');
-} else if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $email = $_POST["email"];
   
   $pdo = new PDO('mysql:host=db;dbname=posse', 'root', 'root');
