@@ -1,4 +1,5 @@
 <?php
+require(dirname(__FILE__) . '/../../db/pdo.php');
 
 $message = ''; 
 
