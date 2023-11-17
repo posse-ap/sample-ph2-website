@@ -1,14 +1,11 @@
 <?php
+$dsn = 'mysql:host=db;dbname=posse;charset=utf8';
+$user = 'root';
+$password = 'root';
 
-class Database {
-  private static $db;
-
-  static function get() {
-      if(!isset(self::$db))
-          self::$db = new PDO('mysql:host=db;dbname=posse', 'root', 'root');
-          self::$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-          self::$db->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-
-      return self::$db;
-  }
+try {
+  $dbh = new PDO($dsn, $user, $password);
+  echo 'Connection success!';
+} catch (PDOException $e) {
+  echo 'Connection failed: ' . $e->getMessage();
 }

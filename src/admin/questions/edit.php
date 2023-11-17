@@ -1,27 +1,28 @@
 <?php
+require(dirname(__FILE__) . '/../../db/pdo.php');
+
 session_start();
 
 if (!isset($_SESSION['id'])) {
   header('Location: /admin/auth/signin.php');
   exit;
 } else {
-  $pdo = new PDO('mysql:host=db;dbname=posse', 'root', 'root');
 
   $sql = "SELECT * FROM questions WHERE id = :id";
-  $stmt = $pdo->prepare($sql);
+  $stmt = $dbh->prepare($sql);
   $stmt->bindValue(":id", $_REQUEST["id"]);
   $stmt->execute();
   $question = $stmt->fetch();
 
   $sql = "SELECT * FROM choices WHERE question_id = :question_id";
-  $stmt = $pdo->prepare($sql);
+  $stmt = $dbh->prepare($sql);
   $stmt->bindValue(":question_id", $_REQUEST["id"]);
   $stmt->execute();
   $choices = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-      $pdo->beginTransaction();
+      $dbh->beginTransaction();
 
       // 問題レコードの更新（画像）
       if ($_FILES["image"]["tmp_name"] !== "") {
@@ -51,7 +52,7 @@ if (!isset($_SESSION['id'])) {
         // ファイルが正常に移動されたら、データベースを更新する
         if (move_uploaded_file($_FILES['image']['tmp_name'], $image_path)) {
           $sql = "UPDATE questions SET image = :image WHERE id = :id";
-          $stmt = $pdo->prepare($sql);
+          $stmt = $dbh->prepare($sql);
           $stmt->bindValue(":image", $image_name);
           $stmt->bindValue(":id", $_POST["question_id"]);
           $stmt->execute();
@@ -62,7 +63,7 @@ if (!isset($_SESSION['id'])) {
 
       // 問題レコードの更新（画像以外）
       $sql = "UPDATE questions SET content = :content, supplement = :supplement WHERE id = :id";
-      $stmt = $pdo->prepare($sql);
+      $stmt = $dbh->prepare($sql);
       $stmt->bindValue(":content", $_POST["content"]);
       $stmt->bindValue(":supplement", $_POST["supplement"]);
       $stmt->bindValue(":id", $_POST["question_id"]);
@@ -72,16 +73,16 @@ if (!isset($_SESSION['id'])) {
       $sql = "UPDATE choices SET name = :name, valid = :valid WHERE id = :id AND question_id = :question_id";
       // 各選択肢についてループ
       for ($i = 0; $i < count($_POST["choices"]); $i++) {
-        $stmt = $pdo->prepare($sql);
+        $stmt = $dbh->prepare($sql);
         $stmt->bindValue(":name", $_POST["choices"][$i]);
         $stmt->bindValue(":valid", (int)($_POST['correctChoice'] == $_POST["choice_ids"][$i]) ? 1 : 0);
         $stmt->bindValue(":id", $_POST["choice_ids"][$i]);
         $stmt->bindValue(":question_id", $_POST["question_id"]);
         $stmt->execute();
       }
-      $pdo->commit();
+      $dbh->commit();
     } catch (PDOException $e) {
-      $pdo->rollBack();
+      $dbh->rollBack();
       error_log($e->getMessage());
     }
 

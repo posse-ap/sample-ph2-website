@@ -1,4 +1,6 @@
 <?php
+require(dirname(__FILE__) . '/../../db/pdo.php');
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   session_start();
   $email = $_POST["email"];
@@ -10,15 +12,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if ($password !== $password_confirm) {
     $message = "パスワードが一致しません";
   } else {
-    $pdo = new PDO('mysql:host=db;dbname=posse', 'root', 'root');
     $sql = "SELECT * FROM users WHERE email = :email";
-    $stmt = $pdo->prepare($sql);
+    $stmt = $dbh->prepare($sql);
     $stmt->bindValue(":email", $email);
     $stmt->execute();
     $user = $stmt->fetch();
 
     $sql = "SELECT * FROM user_invitations WHERE token = :token AND user_id = :user_id";
-    $stmt = $pdo->prepare($sql);
+    $stmt = $dbh->prepare($sql);
     $stmt->bindValue(":token", $token);
     $stmt->bindValue(":user_id", $user["id"]);
     $stmt->execute();
@@ -34,28 +35,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = "既に認証済みです。";
       } else {
         try {
-          $pdo->beginTransaction();
+          $dbh->beginTransaction();
 
           $sql = "UPDATE users SET name = :name, password = :password WHERE id = :id";
-          $stmt = $pdo->prepare($sql);
+          $stmt = $dbh->prepare($sql);
           $stmt->bindValue(":password", password_hash($password, PASSWORD_DEFAULT));
           $stmt->bindValue(":name", $name);
           $stmt->bindValue(":id", $user["id"]);
           $result = $stmt->execute();
 
           $sql = "UPDATE user_invitations SET activated_at = :activated_at WHERE user_id = :user_id";
-          $stmt = $pdo->prepare($sql);
+          $stmt = $dbh->prepare($sql);
           $stmt->bindValue(":user_id", $user["id"]);
           $stmt->bindValue(":activated_at", (new DateTime())->format('Y-m-d H:i:s'));
           $result = $stmt->execute();
 
-          $pdo->commit();
+          $dbh->commit();
 
           $_SESSION['id'] = $user["id"];
           $_SESSION['message'] = "ユーザー登録に成功しました";
           header('Location: /admin/index.php');
         } catch(PDOException $e) {
-          $pdo->rollBack();
+          $dbh->rollBack();
           $message = $e->getMessage();
         }
       }

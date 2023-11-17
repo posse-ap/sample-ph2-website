@@ -15,8 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'];
 
     // データベースへの接続
-    $pdo = new PDO('mysql:host=db;dbname=posse', 'root', 'root');
-    $stmt = $pdo->prepare('SELECT * FROM users WHERE email = :email');
+    $stmt = $dbh->prepare('SELECT * FROM users WHERE email = :email');
     $stmt->bindValue(':email', $email);
     $stmt->execute();
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
