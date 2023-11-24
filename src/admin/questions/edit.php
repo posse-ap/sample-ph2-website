@@ -82,11 +82,13 @@ if (!isset($_SESSION['id'])) {
         $stmt->execute();
       }
       $dbh->commit();
+      $_SESSION['message'] = "問題編集に成功しました。";
       header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $_POST["question_id"]);
       exit;
     } catch (PDOException $e) {
       $dbh->rollBack();
-      error_log($e->getMessage());
+      $_SESSION['message'] = "問題編集に失敗しました。";
+      echo $e->getMessage();
       exit;
     }
   }

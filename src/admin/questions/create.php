@@ -56,9 +56,11 @@ if (!isset($_SESSION['id'])) {
         ]);
       }
 
+      $_SESSION['message'] = "問題作成に成功しました。";
       header('Location: /admin/index.php');
       exit;
     } catch (PDOException $e) {
+      $_SESSION['message'] = "問題作成に失敗しました。";
       echo $e->getMessage();
       exit;
     }

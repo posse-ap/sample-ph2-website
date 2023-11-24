@@ -29,12 +29,12 @@ if (!isset($_SESSION['id'])) {
       $stmt->execute();
 
       $dbh->commit();
-      $message = "問題削除に成功しました";
+      $message = "問題削除に成功しました。";
       header('Location: ' . $_SERVER['PHP_SELF']);
       exit;
     } catch (PDOException $e) {
       $dbh->rollBack();
-      $message = "問題削除に失敗しました";
+      $message = "問題削除に失敗しました。";
       header('Location: ' . $_SERVER['PHP_SELF']);
       exit;
     }
@@ -67,9 +67,6 @@ if (!isset($_SESSION['id'])) {
     <main>
       <div class="container">
         <h1 class="mb-4">問題一覧</h1>
-        <?php if (isset($_SESSION['message'])) { ?>
-          <p><?= $_SESSION['message'] ?></p>
-        <?php } ?>
         <?php if (isset($message)) { ?>
           <p><?= $message ?></p>
         <?php } ?>
