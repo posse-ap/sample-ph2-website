@@ -18,6 +18,23 @@ if (!isset($_SESSION['id'])) {
     try {
       $dbh->beginTransaction();
 
+      // 削除する問題の画像ファイル名を取得
+      $sql = "SELECT image FROM questions WHERE id = :id";
+      $stmt = $dbh->prepare($sql);
+      $stmt->bindValue(":id", $_POST["id"]);
+      $stmt->execute();
+      $question = $stmt->fetch();
+      $image_name = $question['image'];
+
+      // 画像ファイルが存在する場合、削除する
+      if ($image_name) {
+        $image_path = dirname(__FILE__) . '/../assets/img/quiz/' . $image_name;
+        if (file_exists($image_path)) {
+          unlink($image_path);
+        }
+      }
+
+      // 問題と選択肢をデータベースから削除
       $sql = "DELETE FROM choices WHERE question_id = :question_id";
       $stmt = $dbh->prepare($sql);
       $stmt->bindValue(":question_id", $_POST["id"]);
