@@ -1,4 +1,7 @@
 <?php
+
+require_once(dirname(__FILE__) . '/../db/pdo.php');
+
 session_start();
 
 if (!isset($_SESSION['id'])) {
@@ -27,9 +30,13 @@ if (!isset($_SESSION['id'])) {
 
       $dbh->commit();
       $message = "問題削除に成功しました";
+      header('Location: ' . $_SERVER['PHP_SELF']);
+      exit;
     } catch (PDOException $e) {
       $dbh->rollBack();
       $message = "問題削除に失敗しました";
+      header('Location: ' . $_SERVER['PHP_SELF']);
+      exit;
     }
   }
 }

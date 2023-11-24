@@ -82,13 +82,13 @@ if (!isset($_SESSION['id'])) {
         $stmt->execute();
       }
       $dbh->commit();
+      header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $_POST["question_id"]);
+      exit;
     } catch (PDOException $e) {
       $dbh->rollBack();
       error_log($e->getMessage());
+      exit;
     }
-
-    header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $_POST["question_id"]);
-    exit;
   }
 }
 ?>
