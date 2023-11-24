@@ -61,9 +61,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <main>
       <div class="container">
         <h1 class="mb-4">ログイン</h1>
-          <?php if ($message !== ''): ?>
+          <?php if ($message !== '') { ?>
             <p style="color: red;"><?= $message ?></p>
-          <?php endif; ?>
+          <?php }; ?>
           <form method="POST">
             <div class="mb-3">
               <label for="email" class="form-label">Email</label>
