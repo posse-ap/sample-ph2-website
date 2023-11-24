@@ -1,4 +1,7 @@
 <?php
+
+require_once(dirname(__FILE__) . '/../db/pdo.php');
+
 session_start();
 
 if (!isset($_SESSION['id'])) {
@@ -9,26 +12,49 @@ if (!isset($_SESSION['id'])) {
     unset($_SESSION['message']);
   }
 
-  $pdo = new PDO('mysql:host=db;dbname=posse', 'root', 'root');
-  $questions = $pdo->query("SELECT * FROM questions")->fetchAll(PDO::FETCH_ASSOC);
+  $questions = $dbh->query("SELECT * FROM questions")->fetchAll();
   $is_empty = count($questions) === 0;
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $pdo->beginTransaction();
     try {
+      $dbh->beginTransaction();
+
+      // 削除する問題の画像ファイル名を取得
+      $sql = "SELECT image FROM questions WHERE id = :id";
+      $stmt = $dbh->prepare($sql);
+      $stmt->bindValue(":id", $_POST["id"]);
+      $stmt->execute();
+      $question = $stmt->fetch();
+      $image_name = $question['image'];
+
+      // 画像ファイルが存在する場合、削除する
+      if ($image_name) {
+        $image_path = dirname(__FILE__) . '/../assets/img/quiz/' . $image_name;
+        if (file_exists($image_path)) {
+          unlink($image_path);
+        }
+      }
+
+      // 問題と選択肢をデータベースから削除
       $sql = "DELETE FROM choices WHERE question_id = :question_id";
-      $stmt = $pdo->prepare($sql);
+      $stmt = $dbh->prepare($sql);
       $stmt->bindValue(":question_id", $_POST["id"]);
       $stmt->execute();
 
       $sql = "DELETE FROM questions WHERE id = :id";
-      $stmt = $pdo->prepare($sql);
+      $stmt = $dbh->prepare($sql);
       $stmt->bindValue(":id", $_POST["id"]);
       $stmt->execute();
-      $pdo->commit();
-      $message = "問題削除に成功しました";
-    } catch(Error $e) {
-      $pdo->rollBack();
-      $message = "問題削除に失敗しました";
+
+      $dbh->commit();
+      $_SESSION['message'] = "問題削除に成功しました。";
+      header('Location: ' . $_SERVER['PHP_SELF']);
+      exit;
+    } catch (PDOException $e) {
+      $dbh->rollBack();
+      $_SESSION['message'] = "問題削除に失敗しました。";
+      error_log($e->getMessage());
+      header('Location: ' . $_SERVER['PHP_SELF']);
+      exit;
     }
   }
 }
@@ -47,10 +73,8 @@ if (!isset($_SESSION['id'])) {
   <!-- Google Fonts読み込み -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Plus+Jakarta+Sans:wght@400;700&display=swap"
-    rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Plus+Jakarta+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
   <script src="../assets/scripts/common.js" defer></script>
 </head>
 
@@ -61,41 +85,38 @@ if (!isset($_SESSION['id'])) {
     <main>
       <div class="container">
         <h1 class="mb-4">問題一覧</h1>
-        <?php if(isset($_SESSION['message'])) { ?>
-          <p><?= $_SESSION['message'] ?></p>
-        <?php } ?>
-        <?php if(isset($message)) { ?>
+        <?php if (isset($message)) { ?>
           <p><?= $message ?></p>
         <?php } ?>
-        <?php if(!$is_empty) { ?>
-        <table class="table">
-          <thead>
-            <tr>
+        <?php if (!$is_empty) { ?>
+          <table class="table">
+            <thead>
+              <tr>
                 <th>ID</th>
                 <th>問題</th>
                 <th></th>
-            </tr>
-         </thead>
-         <tbody>
-            <?php foreach($questions as $question) { ?>
-            <tr id="question-<?= $question["id"] ?>">
-                <td><?= $question["id"]; ?></td>
-                <td>
-                  <a href="./questions/edit.php?id=<?= $question["id"] ?>">
-                    <?= $question["content"]; ?>
-                  </a>
-                </td>
-                <td>
-                  <form method="POST">
-                    <input type="hidden" value="<?= $question["id"] ?>" name="id">
-                    <input type="submit" value="削除" class="submit">
-                  </form>
-                </td>
-            </tr>
-            <?php } ?>
-          </tbody>
-        </table>
-        <?php } else {?>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($questions as $question) { ?>
+                <tr id="question-<?= $question["id"] ?>">
+                  <td><?= $question["id"]; ?></td>
+                  <td>
+                    <a href="./questions/edit.php?id=<?= $question["id"] ?>">
+                      <?= $question["content"]; ?>
+                    </a>
+                  </td>
+                  <td>
+                    <form method="POST">
+                      <input type="hidden" value="<?= $question["id"] ?>" name="id">
+                      <input type="submit" value="削除" class="submit">
+                    </form>
+                  </td>
+                </tr>
+              <?php } ?>
+            </tbody>
+          </table>
+        <?php } else { ?>
           問題がありません。
         <?php } ?>
       </div>

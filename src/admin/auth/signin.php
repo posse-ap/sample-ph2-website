@@ -1,26 +1,39 @@
 <?php
+require(dirname(__FILE__) . '/../../db/pdo.php');
+
+$message = ''; 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $email = $_POST["email"];
-  $password = $_POST["password"];
-
-  $pdo = new PDO('mysql:host=db;dbname=posse', 'root', 'root');
-  $sql = "SELECT * FROM users WHERE email = :email";
-  $stmt = $pdo->prepare($sql);
-  $stmt->bindValue(":email", $email);
-  $stmt->execute();
-  $user = $stmt->fetch();
-
-  if (!$user || !password_verify($password, $user["password"])) {
-    $message = "認証情報が正しくありません";
+  // バリデーション
+  if (empty($_POST['email'])) {
+    $message = 'メールアドレスは必須項目です。';
+  } elseif (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
+    $message = '正しいEメールアドレスを指定してください。';
+  } elseif (empty($_POST['password'])) {
+    $message = 'パスワードは必須項目です。';
   } else {
-    session_start();
-    $_SESSION['id'] = $user["id"];
-    $_SESSION['name'] = $user["name"];
-    header('Location: ../index.php');
-    exit();
+    $email = $_POST['email'];
+    $password = $_POST['password'];
+
+    // データベースへの接続
+    $stmt = $dbh->prepare('SELECT * FROM users WHERE email = :email');
+    $stmt->bindValue(':email', $email);
+    $stmt->execute();
+    $user = $stmt->fetch();
+
+    // ユーザーが存在し、パスワードが正しいか確認
+    if ($user && password_verify($password, $user["password"])) {
+      session_start();
+      $_SESSION['id'] = $user["id"];
+      header('Location: ../index.php');
+      exit();
+    } else {
+      // 認証失敗: エラーメッセージをセット
+      $message = 'メールアドレスまたはパスワードが間違っています。';
+    }
   }
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="ja">
@@ -48,13 +61,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <main>
       <div class="container">
         <h1 class="mb-4">ログイン</h1>
-          <?php if (isset($message)) { ?>
-            <p><?= $message ?></p>
-          <?php } ?>
+          <?php if ($message !== '') { ?>
+            <p style="color: red;"><?= $message ?></p>
+          <?php }; ?>
           <form method="POST">
             <div class="mb-3">
               <label for="email" class="form-label">Email</label>
-              <input type="text" name="email" class="email form-control" id="email">
+              <input type="email" name="email" class="email form-control" id="email">
             </div>
             <div class="mb-3">
               <label for="password" class="form-label">パスワード</label>
