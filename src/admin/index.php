@@ -12,7 +12,7 @@ if (!isset($_SESSION['id'])) {
     unset($_SESSION['message']);
   }
 
-  $questions = $dbh->query("SELECT * FROM questions")->fetchAll(PDO::FETCH_ASSOC);
+  $questions = $dbh->query("SELECT * FROM questions")->fetchAll();
   $is_empty = count($questions) === 0;
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {

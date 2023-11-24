@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $dbh->prepare('SELECT * FROM users WHERE email = :email');
     $stmt->bindValue(':email', $email);
     $stmt->execute();
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $user = $stmt->fetch();
 
     // ユーザーが存在し、パスワードが正しいか確認
     if ($user && password_verify($password, $user["password"])) {

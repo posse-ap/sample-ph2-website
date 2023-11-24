@@ -18,7 +18,7 @@ if (!isset($_SESSION['id'])) {
   $stmt = $dbh->prepare($sql);
   $stmt->bindValue(":question_id", $_REQUEST["id"]);
   $stmt->execute();
-  $choices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+  $choices = $stmt->fetchAll();
 
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
