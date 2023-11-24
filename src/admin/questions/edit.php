@@ -88,7 +88,7 @@ if (!isset($_SESSION['id'])) {
     } catch (PDOException $e) {
       $dbh->rollBack();
       $_SESSION['message'] = "問題編集に失敗しました。";
-      echo $e->getMessage();
+      error_log($e->getMessage());
       exit;
     }
   }

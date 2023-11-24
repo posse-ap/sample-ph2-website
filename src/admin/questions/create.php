@@ -61,7 +61,7 @@ if (!isset($_SESSION['id'])) {
       exit;
     } catch (PDOException $e) {
       $_SESSION['message'] = "問題作成に失敗しました。";
-      echo $e->getMessage();
+      error_log($e->getMessage());
       exit;
     }
   }

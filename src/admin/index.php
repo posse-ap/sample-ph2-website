@@ -29,12 +29,13 @@ if (!isset($_SESSION['id'])) {
       $stmt->execute();
 
       $dbh->commit();
-      $message = "問題削除に成功しました。";
+      $_SESSION['message'] = "問題削除に成功しました。";
       header('Location: ' . $_SERVER['PHP_SELF']);
       exit;
     } catch (PDOException $e) {
       $dbh->rollBack();
-      $message = "問題削除に失敗しました。";
+      $_SESSION['message'] = "問題削除に失敗しました。";
+      error_log($e->getMessage());
       header('Location: ' . $_SERVER['PHP_SELF']);
       exit;
     }
