@@ -2,9 +2,8 @@
 
 require_once(dirname(__FILE__) . '/../db/pdo.php');
 
-$pdo = Database::get();
-$questions = $pdo->query("SELECT * FROM questions")->fetchAll(PDO::FETCH_ASSOC);
-$choices = $pdo->query("SELECT * FROM choices")->fetchAll(PDO::FETCH_ASSOC);
+$questions = $dbh->query("SELECT * FROM questions")->fetchAll(PDO::FETCH_ASSOC);
+$choices = $dbh->query("SELECT * FROM choices")->fetchAll(PDO::FETCH_ASSOC);
 
 foreach ($questions as $qKey => $question) {
   $question["choices"] = [];

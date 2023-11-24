@@ -9,27 +9,26 @@ if (!isset($_SESSION['id'])) {
     unset($_SESSION['message']);
   }
 
-  $pdo = new PDO('mysql:host=db;dbname=posse', 'root', 'root');
-  $questions = $pdo->query("SELECT * FROM questions")->fetchAll(PDO::FETCH_ASSOC);
+  $questions = $dbh->query("SELECT * FROM questions")->fetchAll(PDO::FETCH_ASSOC);
   $is_empty = count($questions) === 0;
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-      $pdo->beginTransaction();
+      $dbh->beginTransaction();
 
       $sql = "DELETE FROM choices WHERE question_id = :question_id";
-      $stmt = $pdo->prepare($sql);
+      $stmt = $dbh->prepare($sql);
       $stmt->bindValue(":question_id", $_POST["id"]);
       $stmt->execute();
 
       $sql = "DELETE FROM questions WHERE id = :id";
-      $stmt = $pdo->prepare($sql);
+      $stmt = $dbh->prepare($sql);
       $stmt->bindValue(":id", $_POST["id"]);
       $stmt->execute();
 
-      $pdo->commit();
+      $dbh->commit();
       $message = "問題削除に成功しました";
     } catch (PDOException $e) {
-      $pdo->rollBack();
+      $dbh->rollBack();
       $message = "問題削除に失敗しました";
     }
   }
