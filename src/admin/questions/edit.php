@@ -36,9 +36,10 @@ if (!isset($_SESSION['id'])) {
         }
 
         $allowed_ext = array('jpg', 'jpeg', 'png', 'gif');
-        $file_ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
+        $file_parts = explode('.', $_FILES['image']['name']);
+        $file_ext = strtolower(end($file_parts));
         if (!in_array($file_ext, $allowed_ext)) {
-          throw new Exception("許可されていないファイル拡張子です。");
+          throw new Exception("許可されていないファイル形式です。");
         }
 
         $allowed_mime = array('image/jpeg', 'image/png', 'image/gif');

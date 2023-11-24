@@ -5,6 +5,7 @@ session_start();
 
 if (!isset($_SESSION['id'])) {
   header('Location: /admin/auth/signin.php');
+  exit;
 } else {
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
@@ -20,7 +21,8 @@ if (!isset($_SESSION['id'])) {
 
       // 許可された拡張子かチェック
       $allowed_ext = array('jpg', 'jpeg', 'png', 'gif');
-      $file_ext = strtolower(end(explode('.', $_FILES['image']['name'])));
+      $file_parts = explode('.', $_FILES['image']['name']);
+      $file_ext = strtolower(end($file_parts));
       if (!in_array($file_ext, $allowed_ext)) {
         throw new Exception("許可されていないファイル形式です。");
       }
@@ -53,12 +55,13 @@ if (!isset($_SESSION['id'])) {
           "question_id" => $lastInsertId
         ]);
       }
-    } catch (PDOException $e) {
-      error_log($e->getMessage());
-    }
 
-    header("Location: " . "/admin/index.php");
-    exit;
+      header('Location: /admin/index.php');
+      exit;
+    } catch (PDOException $e) {
+      echo $e->getMessage();
+      exit;
+    }
   }
 }
 
