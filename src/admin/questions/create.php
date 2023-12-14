@@ -2,7 +2,7 @@
 
 require(dirname(__FILE__) . '/../../db/pdo.php');
 require(dirname(__FILE__) . '/../../vendor/autoload.php');
-// Upload
+
 use Verot\Upload\Upload;
 
 session_start();
