@@ -38,23 +38,39 @@ if (!isset($_SESSION['id'])) {
       if (!in_array($file_mime, $allowed_mime)) {
         throw new Exception("許可されていないファイル形式です。");
       }
+      
+      // $image_name = uniqid(mt_rand(), true) . '.' . substr(strrchr($_FILES['image']['name'], '.'), 1);
+      // $image_path = dirname(__FILE__) . '/../../assets/img/quiz/' . $image_name;
+      // move_uploaded_file($_FILES['image']['tmp_name'], $image_path);
 
+      $dbh->beginTransaction();
+      
+      $stmt = $dbh->prepare("INSERT INTO questions(content, image, supplement) VALUES(:content, :image, :supplement)");
+      $stmt->execute([
+        "content" => $_POST["content"],
+        "image" => "",
+        "supplement" => $_POST["supplement"]
+      ]);
+      $lastInsertId = $dbh->lastInsertId();
+      
+      // ファイルアップロード
       $file = $_FILES['image'];
       $lang = 'ja_JP';
 
       // アップロードされたファイル配列を渡す
-      // ※第2引数はエラーメッセージなどの言語設定
       $handle = new Upload($file, $lang);
 
       // $fileのチェック
       if ($handle->uploaded) {
+        // PNGに変換
+        $handle->image_convert = 'png';
+        // 名前を更新
+        $handle->file_new_name_body = 'img-quiz' . $lastInsertId;
         // アップロードディレクトリを指定して保存
-        $handle->process('./img/');
+        $handle->process('../../assets/img/quiz/');
         if ($handle->processed) {
           // アップロード成功
           $image_name = $handle->file_dst_name;
-          $image_path = $handle->file_dst_path;
-          $handle->file_move($image_path, $image_name);
         } else {
           // アップロード処理失敗
           throw new Exception($handle->error);
@@ -64,20 +80,13 @@ if (!isset($_SESSION['id'])) {
         throw new Exception($handle->error);
       }
 
-      // $image_name = uniqid(mt_rand(), true) . '.' . substr(strrchr($_FILES['image']['name'], '.'), 1);
-      // $image_path = dirname(__FILE__) . '/../../assets/img/quiz/' . $image_name;
-      // move_uploaded_file($_FILES['image']['tmp_name'], $image_path);
-
-      $stmt = $dbh->prepare("INSERT INTO questions(content, image, supplement) VALUES(:content, :image, :supplement)");
+      $stmt = $dbh->prepare("UPDATE questions SET image = :image WHERE id = :id");
       $stmt->execute([
-        "content" => $_POST["content"],
         "image" => $image_name,
-        "supplement" => $_POST["supplement"]
+        "id" => $lastInsertId
       ]);
-      $lastInsertId = $dbh->lastInsertId();
 
       $stmt = $dbh->prepare("INSERT INTO choices(name, valid, question_id) VALUES(:name, :valid, :question_id)");
-
       for ($i = 0; $i < count($_POST["choices"]); $i++) {
         $stmt->execute([
           "name" => $_POST["choices"][$i],
@@ -86,6 +95,7 @@ if (!isset($_SESSION['id'])) {
         ]);
       }
 
+      $dbh->commit();
       $_SESSION['message'] = "問題作成に成功しました。";
       header('Location: /admin/index.php');
       exit;
