@@ -14,37 +14,8 @@ if (!isset($_SESSION['id'])) {
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
 
-      // ファイルアップロードのバリデーション
-      if (!isset($_FILES['image']) || $_FILES['image']['error'] != UPLOAD_ERR_OK) {
-        throw new Exception("ファイルがアップロードされていない、またはアップロードでエラーが発生しました。");
-      }
-
-      // ファイルサイズのバリデーション
-      if ($_FILES['image']['size'] > 5000000) {
-        throw new Exception("ファイルサイズが大きすぎます。");
-      }
-
-      // 許可された拡張子かチェック
-      $allowed_ext = array('jpg', 'jpeg', 'png', 'gif');
-      $file_parts = explode('.', $_FILES['image']['name']);
-      $file_ext = strtolower(end($file_parts));
-      if (!in_array($file_ext, $allowed_ext)) {
-        throw new Exception("許可されていないファイル形式です。");
-      }
-
-      // ファイルの内容が画像であるかをチェック
-      $allowed_mime = array('image/jpeg', 'image/png', 'image/gif');
-      $file_mime = mime_content_type($_FILES['image']['tmp_name']);
-      if (!in_array($file_mime, $allowed_mime)) {
-        throw new Exception("許可されていないファイル形式です。");
-      }
-      
-      // $image_name = uniqid(mt_rand(), true) . '.' . substr(strrchr($_FILES['image']['name'], '.'), 1);
-      // $image_path = dirname(__FILE__) . '/../../assets/img/quiz/' . $image_name;
-      // move_uploaded_file($_FILES['image']['tmp_name'], $image_path);
-
       $dbh->beginTransaction();
-      
+
       $stmt = $dbh->prepare("INSERT INTO questions(content, image, supplement) VALUES(:content, :image, :supplement)");
       $stmt->execute([
         "content" => $_POST["content"],
@@ -52,19 +23,27 @@ if (!isset($_SESSION['id'])) {
         "supplement" => $_POST["supplement"]
       ]);
       $lastInsertId = $dbh->lastInsertId();
-      
+
       // ファイルアップロード
       $file = $_FILES['image'];
       $lang = 'ja_JP';
 
-      // アップロードされたファイル配列を渡す
+      // アップロードされたファイルを渡す
       $handle = new Upload($file, $lang);
 
-      // $fileのチェック
       if ($handle->uploaded) {
-        // PNGに変換
+        // バリデーション
+        // ファイルサイズのバリデーション： 5MB (1MB = 1024 KB)
+        $handle->file_max_size = '5120';
+        // ファイルの拡張子と MIMEタイプをチェック
+        $handle->allowed = array('image/jpeg', 'image/png', 'image/gif');
+        // PNGに変換して拡張子を統一
         $handle->image_convert = 'png';
-        // 名前を更新
+        $handle->file_new_name_ext = 'png';
+        // サイズ統一
+        $handle->image_resize = true;
+        $handle->image_x = 718;
+        // 名前を変更して統一
         $handle->file_new_name_body = 'img-quiz' . $lastInsertId;
         // アップロードディレクトリを指定して保存
         $handle->process('../../assets/img/quiz/');
