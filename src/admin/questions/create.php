@@ -79,6 +79,7 @@ if (!isset($_SESSION['id'])) {
       header('Location: /admin/index.php');
       exit;
     } catch (PDOException $e) {
+      $dbh->rollBack();
       $_SESSION['message'] = "問題作成に失敗しました。";
       error_log($e->getMessage());
       exit;
