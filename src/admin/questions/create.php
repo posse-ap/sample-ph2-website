@@ -1,5 +1,9 @@
 <?php
+
 require(dirname(__FILE__) . '/../../db/pdo.php');
+require(dirname(__FILE__) . '/../../vendor/autoload.php');
+// Upload
+use Verot\Upload\Upload;
 
 session_start();
 
@@ -9,6 +13,7 @@ if (!isset($_SESSION['id'])) {
 } else {
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
+
       // ファイルアップロードのバリデーション
       if (!isset($_FILES['image']) || $_FILES['image']['error'] != UPLOAD_ERR_OK) {
         throw new Exception("ファイルがアップロードされていない、またはアップロードでエラーが発生しました。");
@@ -34,9 +39,34 @@ if (!isset($_SESSION['id'])) {
         throw new Exception("許可されていないファイル形式です。");
       }
 
-      $image_name = uniqid(mt_rand(), true) . '.' . substr(strrchr($_FILES['image']['name'], '.'), 1);
-      $image_path = dirname(__FILE__) . '/../../assets/img/quiz/' . $image_name;
-      move_uploaded_file($_FILES['image']['tmp_name'], $image_path);
+      $file = $_FILES['image'];
+      $lang = 'ja_JP';
+
+      // アップロードされたファイル配列を渡す
+      // ※第2引数はエラーメッセージなどの言語設定
+      $handle = new Upload($file, $lang);
+
+      // $fileのチェック
+      if ($handle->uploaded) {
+        // アップロードディレクトリを指定して保存
+        $handle->process('./img/');
+        if ($handle->processed) {
+          // アップロード成功
+          $image_name = $handle->file_dst_name;
+          $image_path = $handle->file_dst_path;
+          $handle->file_move($image_path, $image_name);
+        } else {
+          // アップロード処理失敗
+          throw new Exception($handle->error);
+        }
+      } else {
+        // アップロード失敗
+        throw new Exception($handle->error);
+      }
+
+      // $image_name = uniqid(mt_rand(), true) . '.' . substr(strrchr($_FILES['image']['name'], '.'), 1);
+      // $image_path = dirname(__FILE__) . '/../../assets/img/quiz/' . $image_name;
+      // move_uploaded_file($_FILES['image']['tmp_name'], $image_path);
 
       $stmt = $dbh->prepare("INSERT INTO questions(content, image, supplement) VALUES(:content, :image, :supplement)");
       $stmt->execute([
@@ -131,7 +161,7 @@ if (!isset($_SESSION['id'])) {
           </div>
           <div class="mb-4">
             <label for="question" class="form-label">問題の画像</label>
-            <input type="file" name="image" id="image" class="form-control required" placeholder="問題文を入力してください" />
+            <input type="file" name="image" id="image" class="form-control required" />
           </div>
           <div class="mb-4">
             <label for="question" class="form-label">補足:</label>
