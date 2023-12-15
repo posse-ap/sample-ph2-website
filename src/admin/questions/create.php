@@ -16,14 +16,6 @@ if (!isset($_SESSION['id'])) {
 
       $dbh->beginTransaction();
 
-      $stmt = $dbh->prepare("INSERT INTO questions(content, image, supplement) VALUES(:content, :image, :supplement)");
-      $stmt->execute([
-        "content" => $_POST["content"],
-        "image" => "",
-        "supplement" => $_POST["supplement"]
-      ]);
-      $lastInsertId = $dbh->lastInsertId();
-
       // ファイルアップロード
       $file = $_FILES['image'];
       $lang = 'ja_JP';
@@ -43,8 +35,6 @@ if (!isset($_SESSION['id'])) {
         // サイズ統一
         $handle->image_resize = true;
         $handle->image_x = 718;
-        // 名前を変更して統一
-        $handle->file_new_name_body = 'img-quiz' . $lastInsertId;
         // アップロードディレクトリを指定して保存
         $handle->process('../../assets/img/quiz/');
         if ($handle->processed) {
@@ -59,11 +49,13 @@ if (!isset($_SESSION['id'])) {
         throw new Exception($handle->error);
       }
 
-      $stmt = $dbh->prepare("UPDATE questions SET image = :image WHERE id = :id");
+      $stmt = $dbh->prepare("INSERT INTO questions(content, image, supplement) VALUES(:content, :image, :supplement)");
       $stmt->execute([
+        "content" => $_POST["content"],
         "image" => $image_name,
-        "id" => $lastInsertId
+        "supplement" => $_POST["supplement"]
       ]);
+      $lastInsertId = $dbh->lastInsertId();
 
       $stmt = $dbh->prepare("INSERT INTO choices(name, valid, question_id) VALUES(:name, :valid, :question_id)");
       for ($i = 0; $i < count($_POST["choices"]); $i++) {
