@@ -13,7 +13,6 @@ if (!isset($_SESSION['id'])) {
 } else {
   if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-
       $dbh->beginTransaction();
 
       // ファイルアップロード
@@ -25,8 +24,8 @@ if (!isset($_SESSION['id'])) {
 
       if ($handle->uploaded) {
         // バリデーション
-        // ファイルサイズのバリデーション： 5MB (1MB = 1024 KB)
-        $handle->file_max_size = '5120';
+        // ファイルサイズのバリデーション： 5MB
+        $handle->file_max_size = '5120000'; 
         // ファイルの拡張子と MIMEタイプをチェック
         $handle->allowed = array('image/jpeg', 'image/png', 'image/gif');
         // PNGに変換して拡張子を統一

@@ -1,5 +1,8 @@
 <?php
 require(dirname(__FILE__) . '/../../db/pdo.php');
+require(dirname(__FILE__) . '/../../vendor/autoload.php');
+
+use Verot\Upload\Upload;
 
 session_start();
 
@@ -24,45 +27,47 @@ if (!isset($_SESSION['id'])) {
     try {
       $dbh->beginTransaction();
 
-      // 問題レコードの更新（画像）
-      if ($_FILES["image"]["tmp_name"] !== "") {
+      // ファイルアップロード
+      $file = $_FILES['image'];
+      $lang = 'ja_JP';
 
-        if ($_FILES['image']['error'] != UPLOAD_ERR_OK) {
-          throw new Exception("ファイルがアップロードされていない、またはアップロードでエラーが発生しました。");
-        }
+      if (!empty($file['name'])) {
+        // アップロードされたファイルを渡す
+        $handle = new Upload($file, $lang);
 
-        if ($_FILES['image']['size'] > 5000000) {
-          throw new Exception("ファイルサイズが大きすぎます。");
-        }
+        if ($handle->uploaded) {
+          // バリデーション
+          // ファイルサイズのバリデーション： 5MB
+          $handle->file_max_size = '5120000';
+          // ファイルの拡張子と MIMEタイプをチェック
+          $handle->allowed = array('image/jpeg', 'image/png', 'image/gif');
+          // PNGに変換して拡張子を統一
+          $handle->image_convert = 'png';
+          $handle->file_new_name_ext = 'png';
+          // サイズ統一
+          $handle->image_resize = true;
+          $handle->image_x = 718;
+          // アップロードディレクトリを指定して保存
+          $handle->process('../../assets/img/quiz/');
+          if ($handle->processed) {
+            $image_name = $handle->file_dst_name;
 
-        $allowed_ext = array('jpg', 'jpeg', 'png', 'gif');
-        $file_parts = explode('.', $_FILES['image']['name']);
-        $file_ext = strtolower(end($file_parts));
-        if (!in_array($file_ext, $allowed_ext)) {
-          throw new Exception("許可されていないファイル形式です。");
-        }
-
-        $allowed_mime = array('image/jpeg', 'image/png', 'image/gif');
-        $file_mime = mime_content_type($_FILES['image']['tmp_name']);
-        if (!in_array($file_mime, $allowed_mime)) {
-          throw new Exception("許可されていないMIMEタイプです。");
-        }
-
-        $image_name = uniqid(mt_rand(), true) . '.' . substr(strrchr($_FILES['image']['name'], '.'), 1);
-        $image_path = dirname(__FILE__) . '/../../assets/img/quiz/' . $image_name;
-        // ファイルが正常に移動されたら、データベースを更新する
-        if (move_uploaded_file($_FILES['image']['tmp_name'], $image_path)) {
-          $sql = "UPDATE questions SET image = :image WHERE id = :id";
-          $stmt = $dbh->prepare($sql);
-          $stmt->bindValue(":image", $image_name);
-          $stmt->bindValue(":id", $_POST["question_id"]);
-          $stmt->execute();
+            // データベースを更新
+            $sql = "UPDATE questions SET image = :image WHERE id = :id";
+            $stmt = $dbh->prepare($sql);
+            $stmt->bindValue(":image", $image_name);
+            $stmt->bindValue(":id", $_POST["question_id"]);
+            $stmt->execute();
+          } else {
+            throw new Exception($handle->error);
+          }
         } else {
-          throw new Exception("Failed to upload the image.");
+          // アップロード失敗
+          throw new Exception($handle->error);
         }
       }
 
-      // 問題レコードの更新（画像以外）
+      // 問題レコードの更新
       $sql = "UPDATE questions SET content = :content, supplement = :supplement WHERE id = :id";
       $stmt = $dbh->prepare($sql);
       $stmt->bindValue(":content", $_POST["content"]);
@@ -83,7 +88,7 @@ if (!isset($_SESSION['id'])) {
       }
       $dbh->commit();
       $_SESSION['message'] = "問題編集に成功しました。";
-      header('Location: ' . $_SERVER['PHP_SELF'] . '?id=' . $_POST["question_id"]);
+      header('Location: /admin/index.php');
       exit;
     } catch (PDOException $e) {
       $dbh->rollBack();
