@@ -11,7 +11,7 @@ vim \
 libpq-dev \
 && docker-php-ext-install pdo_mysql pdo_pgsql mysqli
 
-# Composer2.0 install
+# Composer の最新版を install
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 COPY src /usr/share/nginx/html
