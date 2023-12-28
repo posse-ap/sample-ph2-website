@@ -1,5 +1,5 @@
 <?php
-require(__DIR__ . '/../../db/pdo.php');
+require(__DIR__ . '/../../db/dbconnect.php');
 require(__DIR__ . '/../../vendor/autoload.php');
 
 use Verot\Upload\Upload;

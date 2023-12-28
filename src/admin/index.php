@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/../db/pdo.php';
+require __DIR__ . '/../db/dbconnect.php';
 
 session_start();
 
