@@ -9,93 +9,92 @@ session_start();
 if (!isset($_SESSION['id'])) {
   header('Location: /admin/auth/signin.php');
   exit;
-} else {
+}
 
-  $sql = "SELECT * FROM questions WHERE id = :id";
-  $stmt = $dbh->prepare($sql);
-  $stmt->bindValue(":id", $_REQUEST["id"]);
-  $stmt->execute();
-  $question = $stmt->fetch();
+$sql = "SELECT * FROM questions WHERE id = :id";
+$stmt = $dbh->prepare($sql);
+$stmt->bindValue(":id", $_REQUEST["id"]);
+$stmt->execute();
+$question = $stmt->fetch();
 
-  $sql = "SELECT * FROM choices WHERE question_id = :question_id";
-  $stmt = $dbh->prepare($sql);
-  $stmt->bindValue(":question_id", $_REQUEST["id"]);
-  $stmt->execute();
-  $choices = $stmt->fetchAll();
+$sql = "SELECT * FROM choices WHERE question_id = :question_id";
+$stmt = $dbh->prepare($sql);
+$stmt->bindValue(":question_id", $_REQUEST["id"]);
+$stmt->execute();
+$choices = $stmt->fetchAll();
 
-  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    try {
-      $dbh->beginTransaction();
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  try {
+    $dbh->beginTransaction();
 
-      // ファイルアップロード
-      $file = $_FILES['image'];
-      $lang = 'ja_JP';
+    // ファイルアップロード
+    $file = $_FILES['image'];
+    $lang = 'ja_JP';
 
-      if (!empty($file['name'])) {
-        // アップロードされたファイルを渡す
-        $handle = new Upload($file, $lang);
+    if (!empty($file['name'])) {
+      // アップロードされたファイルを渡す
+      $handle = new Upload($file, $lang);
 
-        if ($handle->uploaded) {
-          // バリデーション
-          // ファイルサイズのバリデーション： 5MB
-          $handle->file_max_size = '5120000';
-          // ファイルの拡張子と MIMEタイプをチェック
-          $handle->allowed = array('image/jpeg', 'image/png', 'image/gif');
-          // PNGに変換して拡張子を統一
-          $handle->image_convert = 'png';
-          $handle->file_new_name_ext = 'png';
-          // サイズ統一
-          $handle->image_resize = true;
-          $handle->image_x = 718;
-          // アップロードディレクトリを指定して保存
-          $handle->process('../../assets/img/quiz/');
-          if ($handle->processed) {
-            $image_name = $handle->file_dst_name;
+      if ($handle->uploaded) {
+        // バリデーション
+        // ファイルサイズのバリデーション： 5MB
+        $handle->file_max_size = '5120000';
+        // ファイルの拡張子と MIMEタイプをチェック
+        $handle->allowed = array('image/jpeg', 'image/png', 'image/gif');
+        // PNGに変換して拡張子を統一
+        $handle->image_convert = 'png';
+        $handle->file_new_name_ext = 'png';
+        // サイズ統一
+        $handle->image_resize = true;
+        $handle->image_x = 718;
+        // アップロードディレクトリを指定して保存
+        $handle->process('../../assets/img/quiz/');
+        if ($handle->processed) {
+          $image_name = $handle->file_dst_name;
 
-            // データベースを更新
-            $sql = "UPDATE questions SET image = :image WHERE id = :id";
-            $stmt = $dbh->prepare($sql);
-            $stmt->bindValue(":image", $image_name);
-            $stmt->bindValue(":id", $_POST["question_id"]);
-            $stmt->execute();
-          } else {
-            throw new Exception($handle->error);
-          }
+          // データベースを更新
+          $sql = "UPDATE questions SET image = :image WHERE id = :id";
+          $stmt = $dbh->prepare($sql);
+          $stmt->bindValue(":image", $image_name);
+          $stmt->bindValue(":id", $_POST["question_id"]);
+          $stmt->execute();
         } else {
-          // アップロード失敗
           throw new Exception($handle->error);
         }
+      } else {
+        // アップロード失敗
+        throw new Exception($handle->error);
       }
-
-      // 問題レコードの更新
-      $sql = "UPDATE questions SET content = :content, supplement = :supplement WHERE id = :id";
-      $stmt = $dbh->prepare($sql);
-      $stmt->bindValue(":content", $_POST["content"]);
-      $stmt->bindValue(":supplement", $_POST["supplement"]);
-      $stmt->bindValue(":id", $_POST["question_id"]);
-      $stmt->execute();
-
-      // 選択肢レコードの更新
-      $sql = "UPDATE choices SET name = :name, valid = :valid WHERE id = :id AND question_id = :question_id";
-      // 各選択肢についてループ
-      for ($i = 0; $i < count($_POST["choices"]); $i++) {
-        $stmt = $dbh->prepare($sql);
-        $stmt->bindValue(":name", $_POST["choices"][$i]);
-        $stmt->bindValue(":valid", (int)($_POST['correctChoice'] == $_POST["choice_ids"][$i]) ? 1 : 0);
-        $stmt->bindValue(":id", $_POST["choice_ids"][$i]);
-        $stmt->bindValue(":question_id", $_POST["question_id"]);
-        $stmt->execute();
-      }
-      $dbh->commit();
-      $_SESSION['message'] = "問題編集に成功しました。";
-      header('Location: /admin/index.php');
-      exit;
-    } catch (PDOException $e) {
-      $dbh->rollBack();
-      $_SESSION['message'] = "問題編集に失敗しました。";
-      error_log($e->getMessage());
-      exit;
     }
+
+    // 問題レコードの更新
+    $sql = "UPDATE questions SET content = :content, supplement = :supplement WHERE id = :id";
+    $stmt = $dbh->prepare($sql);
+    $stmt->bindValue(":content", $_POST["content"]);
+    $stmt->bindValue(":supplement", $_POST["supplement"]);
+    $stmt->bindValue(":id", $_POST["question_id"]);
+    $stmt->execute();
+
+    // 選択肢レコードの更新
+    $sql = "UPDATE choices SET name = :name, valid = :valid WHERE id = :id AND question_id = :question_id";
+    // 各選択肢についてループ
+    for ($i = 0; $i < count($_POST["choices"]); $i++) {
+      $stmt = $dbh->prepare($sql);
+      $stmt->bindValue(":name", $_POST["choices"][$i]);
+      $stmt->bindValue(":valid", (int)($_POST['correctChoice'] == $_POST["choice_ids"][$i]) ? 1 : 0);
+      $stmt->bindValue(":id", $_POST["choice_ids"][$i]);
+      $stmt->bindValue(":question_id", $_POST["question_id"]);
+      $stmt->execute();
+    }
+    $dbh->commit();
+    $_SESSION['message'] = "問題編集に成功しました。";
+    header('Location: /admin/index.php');
+    exit;
+  } catch (PDOException $e) {
+    $dbh->rollBack();
+    $_SESSION['message'] = "問題編集に失敗しました。";
+    error_log($e->getMessage());
+    exit;
   }
 }
 ?>
