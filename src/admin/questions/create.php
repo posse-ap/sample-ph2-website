@@ -10,71 +10,71 @@ session_start();
 if (!isset($_SESSION['id'])) {
   header('Location: /admin/auth/signin.php');
   exit;
-} else {
-  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    try {
-      $dbh->beginTransaction();
+}
 
-      // ファイルアップロード
-      $file = $_FILES['image'];
-      $lang = 'ja_JP';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  try {
+    $dbh->beginTransaction();
 
-      // アップロードされたファイルを渡す
-      $handle = new Upload($file, $lang);
+    // ファイルアップロード
+    $file = $_FILES['image'];
+    $lang = 'ja_JP';
 
-      if ($handle->uploaded) {
-        // バリデーション
-        // ファイルサイズのバリデーション： 5MB
-        $handle->file_max_size = '5120000'; 
-        // ファイルの拡張子と MIMEタイプをチェック
-        $handle->allowed = array('image/jpeg', 'image/png', 'image/gif');
-        // PNGに変換して拡張子を統一
-        $handle->image_convert = 'png';
-        $handle->file_new_name_ext = 'png';
-        // サイズ統一
-        $handle->image_resize = true;
-        $handle->image_x = 718;
-        // アップロードディレクトリを指定して保存
-        $handle->process('../../assets/img/quiz/');
-        if ($handle->processed) {
-          // アップロード成功
-          $image_name = $handle->file_dst_name;
-        } else {
-          // アップロード処理失敗
-          throw new Exception($handle->error);
-        }
+    // アップロードされたファイルを渡す
+    $handle = new Upload($file, $lang);
+
+    if ($handle->uploaded) {
+      // バリデーション
+      // ファイルサイズのバリデーション： 5MB
+      $handle->file_max_size = '5120000';
+      // ファイルの拡張子と MIMEタイプをチェック
+      $handle->allowed = array('image/jpeg', 'image/png', 'image/gif');
+      // PNGに変換して拡張子を統一
+      $handle->image_convert = 'png';
+      $handle->file_new_name_ext = 'png';
+      // サイズ統一
+      $handle->image_resize = true;
+      $handle->image_x = 718;
+      // アップロードディレクトリを指定して保存
+      $handle->process('../../assets/img/quiz/');
+      if ($handle->processed) {
+        // アップロード成功
+        $image_name = $handle->file_dst_name;
       } else {
-        // アップロード失敗
+        // アップロード処理失敗
         throw new Exception($handle->error);
       }
-
-      $stmt = $dbh->prepare("INSERT INTO questions(content, image, supplement) VALUES(:content, :image, :supplement)");
-      $stmt->execute([
-        "content" => $_POST["content"],
-        "image" => $image_name,
-        "supplement" => $_POST["supplement"]
-      ]);
-      $lastInsertId = $dbh->lastInsertId();
-
-      $stmt = $dbh->prepare("INSERT INTO choices(name, valid, question_id) VALUES(:name, :valid, :question_id)");
-      for ($i = 0; $i < count($_POST["choices"]); $i++) {
-        $stmt->execute([
-          "name" => $_POST["choices"][$i],
-          "valid" => (int)$_POST['correctChoice'] === $i + 1 ? 1 : 0,
-          "question_id" => $lastInsertId
-        ]);
-      }
-
-      $dbh->commit();
-      $_SESSION['message'] = "問題作成に成功しました。";
-      header('Location: /admin/index.php');
-      exit;
-    } catch (PDOException $e) {
-      $dbh->rollBack();
-      $_SESSION['message'] = "問題作成に失敗しました。";
-      error_log($e->getMessage());
-      exit;
+    } else {
+      // アップロード失敗
+      throw new Exception($handle->error);
     }
+
+    $stmt = $dbh->prepare("INSERT INTO questions(content, image, supplement) VALUES(:content, :image, :supplement)");
+    $stmt->execute([
+      "content" => $_POST["content"],
+      "image" => $image_name,
+      "supplement" => $_POST["supplement"]
+    ]);
+    $lastInsertId = $dbh->lastInsertId();
+
+    $stmt = $dbh->prepare("INSERT INTO choices(name, valid, question_id) VALUES(:name, :valid, :question_id)");
+    for ($i = 0; $i < count($_POST["choices"]); $i++) {
+      $stmt->execute([
+        "name" => $_POST["choices"][$i],
+        "valid" => (int)$_POST['correctChoice'] === $i + 1 ? 1 : 0,
+        "question_id" => $lastInsertId
+      ]);
+    }
+
+    $dbh->commit();
+    $_SESSION['message'] = "問題作成に成功しました。";
+    header('Location: /admin/index.php');
+    exit;
+  } catch (PDOException $e) {
+    $dbh->rollBack();
+    $_SESSION['message'] = "問題作成に失敗しました。";
+    error_log($e->getMessage());
+    exit;
   }
 }
 
