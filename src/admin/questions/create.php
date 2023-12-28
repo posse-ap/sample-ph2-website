@@ -1,7 +1,6 @@
 <?php
-
-require(dirname(__FILE__) . '/../../db/pdo.php');
-require(dirname(__FILE__) . '/../../vendor/autoload.php');
+require(__DIR__ . '/../../db/pdo.php');
+require(__DIR__ . '/../../vendor/autoload.php');
 
 use Verot\Upload\Upload;
 
@@ -20,34 +19,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $file = $_FILES['image'];
     $lang = 'ja_JP';
 
-    // アップロードされたファイルを渡す
     $handle = new Upload($file, $lang);
 
-    if ($handle->uploaded) {
-      // バリデーション
-      // ファイルサイズのバリデーション： 5MB
-      $handle->file_max_size = '5120000';
-      // ファイルの拡張子と MIMEタイプをチェック
-      $handle->allowed = array('image/jpeg', 'image/png', 'image/gif');
-      // PNGに変換して拡張子を統一
-      $handle->image_convert = 'png';
-      $handle->file_new_name_ext = 'png';
-      // サイズ統一
-      $handle->image_resize = true;
-      $handle->image_x = 718;
-      // アップロードディレクトリを指定して保存
-      $handle->process('../../assets/img/quiz/');
-      if ($handle->processed) {
-        // アップロード成功
-        $image_name = $handle->file_dst_name;
-      } else {
-        // アップロード処理失敗
-        throw new Exception($handle->error);
-      }
-    } else {
-      // アップロード失敗
+    if (!$handle->uploaded) {
       throw new Exception($handle->error);
     }
+
+    // ファイルサイズのバリデーション： 5MB
+    $handle->file_max_size = '5120000';
+    // ファイルの拡張子と MIMEタイプをチェック
+    $handle->allowed = array('image/jpeg', 'image/png', 'image/gif');
+    // PNGに変換して拡張子を統一
+    $handle->image_convert = 'png';
+    $handle->file_new_name_ext = 'png';
+    // サイズ統一
+    $handle->image_resize = true;
+    $handle->image_x = 718;
+    // アップロードディレクトリを指定して保存
+    $handle->process('../../assets/img/quiz/');
+    if (!$handle->processed) {
+      throw new Exception($handle->error);
+    }
+    $image_name = $handle->file_dst_name;
 
     $stmt = $dbh->prepare("INSERT INTO questions(content, image, supplement) VALUES(:content, :image, :supplement)");
     $stmt->execute([
@@ -77,8 +70,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
   }
 }
-
 ?>
+
 <!DOCTYPE html>
 <html lang="ja">
 
