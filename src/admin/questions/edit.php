@@ -56,6 +56,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         throw new Exception($handle->error);
       }
 
+      // 更新前の画像を削除
+      if ($image_name) {
+        $image_path = __DIR__ . '/../../assets/img/quiz/' . $image_name;
+        if (file_exists($image_path)) {
+          unlink($image_path);
+        }
+      }
+
       $image_name = $handle->file_dst_name;
     }
 
