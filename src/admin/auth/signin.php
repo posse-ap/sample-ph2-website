@@ -1,5 +1,5 @@
 <?php
-require(dirname(__FILE__) . '/../../db/pdo.php');
+require __DIR__ . '/../../db/pdo.php';
 
 $message = ''; 
 
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 
 <body>
-  <?php include(dirname(__FILE__) . '/../../components/admin/header.php'); ?>
+  <?php include __DIR__ . '/../../components/admin/header.php'; ?>
   <div class="wrapper">
     <main>
       <div class="container">

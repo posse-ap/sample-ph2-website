@@ -111,9 +111,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 
 <body>
-  <?php include(dirname(__FILE__) . '/../../components/admin/header.php'); ?>
+  <?php include __DIR__ . '/../../components/admin/header.php'; ?>
   <div class="wrapper">
-    <?php include(dirname(__FILE__) . '/../../components/admin/sidebar.php'); ?>
+    <?php include __DIR__ . '/../../components/admin/sidebar.php'; ?>
     <main>
       <div class="container">
         <h1 class="mb-4">問題編集</h1>

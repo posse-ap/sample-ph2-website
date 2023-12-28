@@ -1,6 +1,5 @@
 <?php
-
-require_once(dirname(__FILE__) . '/../db/pdo.php');
+require __DIR__ . '/../db/pdo.php';
 
 $questions = $dbh->query("SELECT * FROM questions")->fetchAll();
 $choices = $dbh->query("SELECT * FROM choices")->fetchAll();

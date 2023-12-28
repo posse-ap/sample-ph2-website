@@ -18,7 +18,7 @@
 </head>
 
 <body>
-  <?php include(dirname(__FILE__) . '/components/header.php'); ?>
+  <?php include __DIR__ . '/components/header.php'; ?>
   <main class="l-main">
     <section class="p-top-hero">
       <div class="p-top-hero__inner">
@@ -73,7 +73,7 @@
     </div>
   </div>
 
-  <?php include(dirname(__FILE__) . '/components/footer.php'); ?>
+  <?php include __DIR__ . '/components/footer.php'; ?>
   
 </body>
 
