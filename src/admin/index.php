@@ -1,6 +1,5 @@
 <?php
-
-require_once(dirname(__FILE__) . '/../db/pdo.php');
+require __DIR__ . '/../db/dbconnect.php';
 
 session_start();
 
@@ -28,7 +27,7 @@ if (!isset($_SESSION['id'])) {
 
       // 画像ファイルが存在する場合、削除する
       if ($image_name) {
-        $image_path = dirname(__FILE__) . '/../assets/img/quiz/' . $image_name;
+        $image_path = __DIR__ . '/../assets/img/quiz/' . $image_name;
         if (file_exists($image_path)) {
           unlink($image_path);
         }
@@ -59,6 +58,7 @@ if (!isset($_SESSION['id'])) {
   }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="ja">
 
@@ -79,9 +79,9 @@ if (!isset($_SESSION['id'])) {
 </head>
 
 <body>
-  <?php include(dirname(__FILE__) . '/../components/admin/header.php'); ?>
+  <?php include __DIR__ . '/../components/admin/header.php'; ?>
   <div class="wrapper">
-    <?php include(dirname(__FILE__) . '/../components/admin/sidebar.php'); ?>
+    <?php include __DIR__ . '/../components/admin/sidebar.php'; ?>
     <main>
       <div class="container">
         <h1 class="mb-4">問題一覧</h1>
